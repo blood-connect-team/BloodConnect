@@ -110,7 +110,6 @@ export default function EmergencyRequest() {
       
       // Send email alerts to matching donors (if configured)
       if (matchingDonors && matchingDonors.length > 0) {
-        let emailsSent = 0;
         matchingDonors.forEach(donor => {
           sendEmailAlert(donor, {
             bloodGroup: normalizedBloodGroup,
@@ -118,7 +117,6 @@ export default function EmergencyRequest() {
             urgency: f.urgency
           })
           .then(() => {
-            emailsSent++;
             console.log(`Email sent to ${donor.email}`);
           })
           .catch(err => {

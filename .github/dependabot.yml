@@ -1,0 +1,48 @@
+# Dependabot version updates. Policy for patch/minor/major/security: docs/DEVOPS.md#dependabot
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Asia/Karachi
+    # Keep the review load small for a four-person part-time team.
+    open-pull-requests-limit: 4
+    # Wait a week after a release before proposing it (lets the ecosystem catch bad releases).
+    # Security updates are not delayed by this.
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      include: scope # -> "chore(deps): ..." / "chore(deps-dev): ..."
+    labels:
+      - dependencies
+      - "type:chore"
+    groups:
+      # Minor and patch updates arrive as at most two grouped PRs per week.
+      # Major updates are NOT grouped: each one gets its own PR for a deliberate review.
+      npm-development:
+        dependency-type: development
+        update-types: [minor, patch]
+      npm-production:
+        dependency-type: production
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+      timezone: Asia/Karachi
+    open-pull-requests-limit: 2
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+    labels:
+      - dependencies
+      - "type:chore"
+    groups:
+      github-actions:
+        patterns: ["*"]

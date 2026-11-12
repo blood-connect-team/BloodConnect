@@ -7,7 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-.env.local
+# Environment files: real values stay local. Only the placeholder template is tracked.
+.env
+.env.*
+!.env.example
+
+# Database dumps and backups may contain personal data: never commit them.
+*.dump
+*.backup
+/backups/
 
 node_modules
 dist

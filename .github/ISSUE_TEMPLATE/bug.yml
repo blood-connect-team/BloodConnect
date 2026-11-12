@@ -1,0 +1,53 @@
+name: Bug report
+description: Something in Blood Connect is broken.
+title: "<what is broken, where>"
+labels: ["type:bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Security problem or leaked credential?** Do not file it here. Follow SECURITY.md instead.
+        Remove any real names, phone numbers, emails or tokens from logs and screenshots.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where (route, device, browser, screen width)
+      placeholder: "/dashboard, Android Chrome, 375 px"
+  - type: input
+    id: version
+    attributes:
+      label: Commit or deployment
+      description: Commit SHA, PR number or preview URL where you saw it.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or console output (personal data removed)
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety
+      options:
+        - label: I removed any real personal data, credentials or tokens from this report.
+          required: true

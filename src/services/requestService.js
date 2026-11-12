@@ -57,7 +57,7 @@ export const requestService = {
     } catch (error) {
       console.error('RequestService :: getActiveRequests :: error', error);
       if (error?.code === 401) {
-        throw new Error('Request access is blocked by Appwrite permissions. Allow read access on the requests collection or request documents.');
+        throw new Error('Request access is blocked by Appwrite permissions. Allow read access on the requests collection or request documents.', { cause: error });
       }
       throw error;
     }

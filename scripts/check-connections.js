@@ -1,6 +1,6 @@
 // Simple connection checks for Appwrite, EmailJS and WhatsApp link generation
-// Usage: set env vars as needed, then run `node scripts/check-connections.js`
-/* global process */
+// Usage: npm run check-connections   (loads .env.local if present)
+// All credentials come from environment variables only (see .env.example). Values are never printed.
 
 const env = process.env;
 
@@ -9,9 +9,11 @@ const appwriteHealthUrl = `${appwriteEndpoint}/health`;
 
 import { Client, Databases } from 'appwrite';
 
-const emailService = env.EMAILJS_SERVICE_ID || 'service_y2d6gj6';
-const emailTemplate = env.EMAILJS_TEMPLATE_ID || 'template_9747r61';
-const emailUser = env.EMAILJS_USER_ID || 'PFmDTW3iSsA0-YpRa';
+// EmailJS configuration: environment only, no hard-coded fallbacks. The server-style names
+// (EMAILJS_*) take precedence; the frontend VITE_EMAILJS_* names are accepted as a convenience.
+const emailService = env.EMAILJS_SERVICE_ID || env.VITE_EMAILJS_SERVICE_ID || '';
+const emailTemplate = env.EMAILJS_TEMPLATE_ID || env.VITE_EMAILJS_TEMPLATE_ID || '';
+const emailUser = env.EMAILJS_USER_ID || env.VITE_EMAILJS_PUBLIC_KEY || '';
 
 const testEmail = env.TEST_RECIPIENT_EMAIL || null;
 const testName = env.TEST_RECIPIENT_NAME || 'Test Recipient';
@@ -69,6 +71,22 @@ async function checkEmailJS() {
   if (!testEmail) {
     console.log('\n[EmailJS] Skipped: set TEST_RECIPIENT_EMAIL to run a live send.');
     return null;
+  }
+
+  // Fail clearly (without printing any values) when configuration is incomplete.
+  // Empty values and untouched .env.example placeholders ("your_...") both count as missing,
+  // so no request is sent to EmailJS with template values.
+  const isUnset = (value) => !value || /^your_/i.test(value);
+  const missing = [
+    ['EMAILJS_SERVICE_ID', emailService],
+    ['EMAILJS_TEMPLATE_ID', emailTemplate],
+    ['EMAILJS_USER_ID (EmailJS public key)', emailUser],
+  ]
+    .filter(([, value]) => isUnset(value))
+    .map(([name]) => name);
+  if (missing.length > 0) {
+    console.error(`\n[EmailJS] Missing configuration: ${missing.join(', ')}. Set real values as environment variables (see .env.example).`);
+    return false;
   }
 
   const body = {

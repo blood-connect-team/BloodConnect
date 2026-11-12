@@ -7,8 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
+    "test": "node --test \"src/**/*.test.js\"",
     "preview": "vite preview",
-    "check-connections": "node scripts/check-connections.js"
+    "check-connections": "node --env-file-if-exists=.env.local scripts/check-connections.js"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

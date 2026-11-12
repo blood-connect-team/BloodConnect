@@ -1,0 +1,16 @@
+# Categories for GitHub's auto-generated release notes, based on PR labels.
+# Releases are created manually at milestone ends (docs/DEVOPS.md#release-process).
+changelog:
+  categories:
+    - title: Security
+      labels: ["type:security"]
+    - title: Features
+      labels: ["type:feature"]
+    - title: Fixes
+      labels: ["type:bug"]
+    - title: Improvements and technical debt
+      labels: ["type:improvement", "type:tech-debt"]
+    - title: Docs, tests and chores
+      labels: ["type:docs", "type:testing", "type:chore", "dependencies"]
+    - title: Other changes
+      labels: ["*"]

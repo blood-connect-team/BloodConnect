@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import LogoImage from '../../assets/BloodConnectLogo.png';
 
 export function Logo({ variant = 'full' }) {

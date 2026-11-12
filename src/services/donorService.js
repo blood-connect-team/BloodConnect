@@ -50,7 +50,7 @@ export const donorService = {
     } catch (error) {
       console.error('DonorService :: getDonors :: error', error);
       if (error?.code === 401) {
-        throw new Error('Donor lookup is blocked by Appwrite permissions. Allow read access on the donors collection or request documents.');
+        throw new Error('Donor lookup is blocked by Appwrite permissions. Allow read access on the donors collection or request documents.', { cause: error });
       }
       throw error;
     }

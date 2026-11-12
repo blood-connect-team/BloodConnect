@@ -1,0 +1,126 @@
+name: Task
+description: Planned work (bug fix, feature, improvement, chore) with clear acceptance criteria.
+title: "<imperative, specific title>"
+labels: ["needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill every required section so anyone can pick this up without a meeting.
+        Priority, Size, Workstream and Phase are set as **Project fields** during triage.
+        Never paste real personal data, keys or tokens.
+  - type: input
+    id: traceability
+    attributes:
+      label: Traceability
+      description: Related audit/blueprint IDs.
+      placeholder: "ISSUE-26, FEAT-002, NF-13"
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What is wrong or missing? Include file paths and line numbers where possible.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+      description: Who is affected and how.
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current behaviour
+      description: Verified current behaviour, or "not implemented".
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: direction
+    attributes:
+      label: Proposed solution / implementation direction
+      description: A suggested approach. The implementer may choose another one with justification.
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checkbox list. Each item must be independently verifiable.
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Issues or decisions that must be done first.
+      placeholder: "#16, #18, decision D-04 (or 'none')"
+  - type: input
+    id: areas
+    attributes:
+      label: Affected areas / files
+      placeholder: "src/pages/Dashboard, src/services"
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing requirements
+      description: Unit / component / access-rule / manual checks expected.
+  - type: textarea
+    id: security
+    attributes:
+      label: Security and privacy notes
+      description: Data touched, who can see it, access-rule impact. Write "none" if not applicable.
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Suggested priority
+      description: Final value is set in the Project during triage.
+      options:
+        - P0
+        - P1
+        - P2
+        - P3
+  - type: dropdown
+    id: size
+    attributes:
+      label: Suggested size
+      options:
+        - XS
+        - S
+        - M
+        - L
+        - XL (must be split before Ready)
+  - type: dropdown
+    id: workstream
+    attributes:
+      label: Workstream
+      options:
+        - A - Platform, Data and Security
+        - B - Donor Experience
+        - C - Requests, Matching and Notifications
+        - D - UX, Admin, Trust and Quality
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety
+      options:
+        - label: This issue contains no real personal data, credentials, keys or tokens.
+          required: true

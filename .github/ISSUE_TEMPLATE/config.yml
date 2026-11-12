@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem or leaked credential
+    url: https://github.com/blood-connect-team/BloodConnect/blob/main/SECURITY.md
+    about: Do not open a public issue. Follow the private reporting steps in SECURITY.md.
+  - name: How we work (claiming tasks, branches, PRs)
+    url: https://github.com/blood-connect-team/BloodConnect/blob/main/CONTRIBUTING.md
+    about: Read this before claiming an issue or opening a pull request.

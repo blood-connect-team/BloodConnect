@@ -1,0 +1,55 @@
+name: Feature idea
+description: Propose a new capability. Ideas enter triage first; they are not Ready for implementation yet.
+title: "<idea in a few words>"
+labels: ["type:feature", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are discussed and groomed during triage. Once accepted, they are rewritten
+        (or replaced) as a **Task** with acceptance criteria before anyone starts work.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What real problem does this solve? For whom?
+    validations:
+      required: true
+  - type: textarea
+    id: users
+    attributes:
+      label: Who benefits
+      description: Donors, requesters, hospitals/blood banks, volunteers, admins...
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Proposed idea
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Privacy, safety and cost concerns
+      description: |
+        What personal data would it need? Could it expose donors or patients? Does it need a paid service?
+        Features must not make medical eligibility decisions.
+    validations:
+      required: true
+  - type: input
+    id: related
+    attributes:
+      label: Related IDs
+      placeholder: "NF-04, ISSUE-31"
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety
+      options:
+        - label: This issue contains no real personal data, credentials, keys or tokens.
+          required: true
