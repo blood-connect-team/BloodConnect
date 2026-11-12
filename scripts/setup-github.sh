@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Blood Connect: one-time GitHub repository setup for the repository OWNER.
+# Blood Connect: one-time GitHub repository setup for repository/organization ADMINS.
 # Steps: labels, milestones, repository merge settings, security features,
 # GitHub Project (board + custom fields), and main-branch protection.
 #
@@ -15,7 +15,7 @@
 #         the project step also needs: gh auth refresh -s project
 set -euo pipefail
 
-REPO="${REPO:-ammarusmani729/BloodConnect}"
+REPO="${REPO:-blood-connect-team/BloodConnect}"
 OWNER="${REPO%%/*}"
 # Owner of the GitHub Project (default: repo owner). A collaborator without access to the
 # owner account can host the board on their own account: PROJECT_OWNER=<their-username>.
@@ -208,8 +208,8 @@ step_branch_protection() {
   local vis checks="" c json
   vis="$(gh api "repos/$REPO" --jq .visibility)"
   if [ "$vis" != "public" ]; then
-    echo "NOTE: $REPO is $vis. On a personal account, protecting a private repo needs the OWNER's GitHub Pro"
-    echo "      (free with the GitHub Student Developer Pack). A 403 'Upgrade to GitHub Pro' means it is NOT active."
+    echo "NOTE: $REPO is $vis. Private repos need a paid plan for branch protection (free orgs: GitHub Team;"
+    echo "      personal accounts: Pro, free via the Student Developer Pack). A 403 means protection is NOT active."
   fi
   for c in $REQUIRED_CHECKS; do checks="${checks:+$checks,}{\"context\":\"$c\"}"; done
   json="{

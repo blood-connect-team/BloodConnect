@@ -3,11 +3,12 @@
 # (other than the PR author) must approve changes to these paths.
 # Team convention on top of that: security-sensitive PRs need TWO approvals (see CONTRIBUTING.md).
 #
-# Only GitHub usernames verified from this repository's commit history are listed:
-#   ammarusmani729 (repository owner), arhamnasirkhan.
-# TODO (repository owner): once Anusha's and Waniya's exact GitHub usernames are confirmed
-# AND both have write access, append them to every line below so no single person
-# becomes the bottleneck. Owners without write access are ignored by GitHub.
+# Only GitHub usernames verified from the project's commit history are listed:
+#   arhamnasirkhan (organization admin), ammarusmani729.
+# Code owners must be members of the blood-connect-team organization with write access;
+# owners without access are ignored by GitHub (until they join).
+# TODO (organization admin): add Anusha's and Waniya's exact GitHub usernames to every line
+# below once they have joined, so no single person becomes the bottleneck.
 # After pushing, check Settings → Code / the CODEOWNERS file view for syntax errors.
 #
 # Paths not listed here have no code owner: any team member may review them.

@@ -18,14 +18,14 @@ push to main ──► CI "ci" again (catches combinations of PRs that are fine 
 3. [Secret scanning](#3-secret-scanning)
 4. [Dependabot](#4-dependabot)
 5. [Branch protection and required checks](#5-branch-protection-and-required-checks)
-6. [Repository visibility decision](#6-repository-visibility-decision)
-7. [Personal branches: deletion plan](#7-personal-branches-deletion-plan)
+6. [Repository visibility](#6-repository-visibility)
+7. [Branches](#7-branches)
 8. [GitHub Project, labels and milestones](#8-github-project-labels-and-milestones)
 9. [Environments and secrets](#9-environments-and-secrets)
 10. [Deployment](#10-deployment)
 11. [Release process](#11-release-process)
 12. [Common CI failures and fixes](#12-common-ci-failures-and-fixes)
-13. [Owner and team checklists](#13-owner-and-team-checklists)
+13. [Admin and team checklists](#13-admin-and-team-checklists)
 
 ---
 
@@ -62,14 +62,15 @@ File: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) · **Required st
 
 File: [`.github/workflows/secrets.yml`](../.github/workflows/secrets.yml) · **Check name: `gitleaks`**
 
-- Uses the official [`gitleaks/gitleaks-action`](https://github.com/gitleaks/gitleaks-action) v3, pinned by SHA, running gitleaks `8.30.1`.
-- **What is scanned:** on a PR, only that PR's commits. The action builds the range `<first PR commit>^..<last PR commit>`; the full history is not rescanned each time. A manual run (*Actions → Secret scan → Run workflow*) scans the whole history; do this occasionally.
-- **Output:** the action runs gitleaks with `--redact`, so values are masked in logs and the job summary. PR comments and the findings artifact are disabled. This means the workflow needs only read permissions.
-- **No licence key needed** while the repo belongs to a personal account (an organization-owned repo needs a free `GITLEAKS_LICENSE` secret).
+- Runs the open-source [Gitleaks CLI](https://github.com/gitleaks/gitleaks) `8.30.1` directly. It is downloaded from the official release and **checksum-verified** in the job.
+- Why not `gitleaks-action`: the action requires a licence key for organization-owned repositories. The CLI is free with no sign-up.
+- **What is scanned:** on a PR, only that PR's commits (`base..head`); the full history is not rescanned each time. A manual run (*Actions → Secret scan → Run workflow*) scans the whole history; do this occasionally.
+- **Output:** gitleaks runs with `--redact`, so values are masked in the logs. The workflow has read-only permissions.
+- **Version bumps:** Dependabot does not update `GITLEAKS_VERSION` in the workflow. Bump it deliberately in a PR.
 - **Limits:** gitleaks matches known key formats and high-entropy strings. It will **not** catch everything; for example, short service or template identifiers like the EmailJS IDs found in this repo may not match any rule. It does not replace review, and it never replaces **rotating** an exposed credential.
 
 **When gitleaks fails:**
-1. Open the job summary to see the rule, file, line and commit (the value is redacted).
+1. Open the job log to see the rule, file, line and commit (the value is redacted).
 2. **If it is a real secret:** follow [SECURITY.md → leaked credentials](../SECURITY.md#if-a-credential-leaks). Rotate first. Removing it from the branch is not enough, because it is already in the PR's commits.
 3. **If it is a false positive** (e.g. an obviously fake test string):
    - Preferred: change the test value so it no longer looks like a secret.
@@ -100,7 +101,7 @@ File: [`.github/dependabot.yml`](../.github/dependabot.yml)
 | **Patch** (grouped) | CI green + quick review of the changelog summary → merge. |
 | **Minor** (grouped) | CI green; run `npm run dev` and click through the main pages once; merge. If one package breaks the group, comment `@dependabot ignore <package> minor version` for that one and open an issue. |
 | **Major** (single) | Treat as a task: read the migration guide, create a linked issue if code changes are needed, test locally, then merge. Fine to leave open for a while; close it if not worth it now. |
-| **Security alert / security update PR** | Highest priority. The owner enables Dependabot alerts and security updates (§5). Fix within days. If only a dev/build-tool is affected (e.g. a linter dependency), note that and fix in the next maintenance PR. |
+| **Security alert / security update PR** | Highest priority. An admin enables Dependabot alerts and security updates (§8, `security` step). Fix within days. If only a dev/build-tool is affected (e.g. a linter dependency), note that and fix in the next maintenance PR. |
 
 Do not bulk-update dependencies by hand (`npm update` / `npm audit fix --force`). Let Dependabot propose changes so CI and review validate them.
 
@@ -123,13 +124,13 @@ Do not bulk-update dependencies by hand (`npm update` / `npm audit fix --force`)
 
 ### 5.2 Plan requirement: who can actually enforce this
 
-- **Public repo:** protection is available on GitHub Free.
-- **Private repo owned by a personal account:** GitHub's plan comparison lists *Protected branches*, *Required reviewers* and *Code owners* for private repositories under **GitHub Pro**, which the GitHub Student Developer Pack gives free to verified students.
-- What matters is the **plan of the account that owns the repo (Ammar's)**. Other members activating the Student Pack does not upgrade the owner's account.
-- The owner's plan could not be checked from here: it is only visible to the owner, at *Settings → Billing and plans*.
-- **If Pro is not active on a private repo:** CI still runs and shows results, but merges are **not technically blocked**. The review rules in CONTRIBUTING.md are then a team convention, not enforcement. Do not claim otherwise.
+The repository is owned by the **`blood-connect-team` organization on the GitHub Free plan**.
+- **Public repo (current):** branch protection, required reviews and CODEOWNERS enforcement are available for free.
+- **Private repo:** on a *free organization* these are **not** available; they need the paid GitHub Team plan. (The Student Developer Pack's free Pro applies to personal accounts, not organizations.) Keep the repo **public** to stay free and enforced.
+- Organization **owners/admins** can apply every setting in this document. Give at least two team members the owner role so nobody is a bottleneck.
+- **Bootstrapping:** required reviews need a second person who can approve. Apply branch protection once at least one other team member has joined the organization with write access.
 
-### 5.3 How to apply (owner only, after team approval)
+### 5.3 How to apply (organization admin)
 ```bash
 # 1. Preview exactly what will change (no changes are made):
 scripts/setup-github.sh branch-protection
@@ -138,46 +139,22 @@ scripts/setup-github.sh --apply branch-protection
 # 3. Later, also require the secret scan:
 REQUIRED_CHECKS="ci gitleaks" scripts/setup-github.sh --apply branch-protection
 ```
-- Needs [GitHub CLI](https://cli.github.com/), `gh auth login` as the owner. Use Git Bash, WSL or macOS/Linux.
+- Needs [GitHub CLI](https://cli.github.com/), `gh auth login` as an organization admin. Use Git Bash, WSL or macOS/Linux.
 - UI alternative: *Settings → Branches → Add branch protection rule* for `main`, with the values in §5.1.
 - **Verify:** open a test PR with a deliberate lint error. The `ci` check fails and the merge button stays blocked. Then push the fix.
-- **Emergency:** if `main` is broken and no reviewer is reachable, the owner may temporarily disable "Include administrators", merge the fix, and re-enable it. Record this in the PR description.
+- **Emergency:** if `main` is broken and no reviewer is reachable, an organization admin may temporarily disable "Include administrators", merge the fix, and re-enable it. Record this in the PR description.
 
-## 6. Repository visibility decision
+## 6. Repository visibility
 
-The repository is **public** today (GitHub API, verified). The team intends to develop privately. **Do not change visibility until the owner and team confirm.** Consequences:
+The repository is **public** and should stay public: on a free organization, a private repository loses branch protection, required reviews and CODEOWNERS enforcement (§5.2), and GitHub secret scanning is free only for public repositories.
 
-| Topic | Public (now) | Private |
-|---|---|---|
-| Who can read code and history | Anyone | Collaborators only |
-| Already-exposed history (EmailJS identifiers) | Visible | Hidden from now on, but **anyone may already have copied it**, so rotation is still required |
-| Branch protection / required reviews / CODEOWNERS enforcement | Free | Needs owner on GitHub Pro (Student Pack) |
-| GitHub Actions minutes | Free | Monthly allowance (§1) |
-| GitHub secret scanning + push protection | Free | Paid; Gitleaks only |
-| Private vulnerability reporting (outside reporters) | Available | Not applicable (only collaborators can see the repo) |
-| Hosting integrations (Cloudflare Pages/Netlify/Vercel) | Work | Work via their GitHub app (re-authorize if asked) |
-| Existing external dependencies on public access | None found (no deployment, Pages site or package publishing configured) | — |
+Because the code and issues are public:
+- never commit secrets or real personal data (SECURITY.md);
+- keep detailed security findings and exploit steps out of issues and PRs; share them privately with the team;
 
-**Recommended order:** (1) rotate the EmailJS credentials; (2) owner activates Student Pack Pro and confirms it under *Billing and plans*; (3) team agrees in writing (issue comment); (4) *Settings → General → Danger Zone → Change visibility → Private*; (5) apply branch protection (§5.3) and check that it shows as active.
+## 7. Branches
 
-## 7. Personal branches: deletion plan
-
-Verified against `origin/main` at `2fd0524`:
-
-| Branch | Tip | Commits not in `main` | Already contained in `main` |
-|---|---|---|---|
-| `ammar` | `b59c292` (first commit) | 0 | yes |
-| `anusha` | `b59c292` (first commit) | 0 | yes |
-| `arham` | `b2aa8b0` ("Email & Whatsapp Integration") | 0 | yes (merged in `435c217`) |
-| `waniya` | `b59c292` (first commit) | 0 | yes |
-
-None holds unique work, so deleting them loses nothing (commits stay reachable from `main`). **Not deleted yet. Waiting for team approval.** After approval, the owner (or each person for their own branch) runs:
-```bash
-git fetch --prune
-for b in ammar anusha arham waniya; do git rev-list --count origin/main..origin/$b; done   # all must print 0
-git push origin --delete ammar anusha arham waniya
-```
-Each member should also delete any local copy (`git branch -d <name>`) and work only on task branches from then on (CONTRIBUTING.md).
+Only `main` and short-lived task branches exist here (no personal branches). Merged branches are deleted automatically once `repo-settings` is applied (§8). Old personal branches from the original hackathon repository were not copied.
 
 ## 8. GitHub Project, labels and milestones
 
@@ -299,22 +276,21 @@ At the end of a phase (or for a hotfix):
 | `scripts/setup-github.sh: $'\r': command not found` | Script checked out with CRLF line endings | `.gitattributes` forces LF; re-checkout the file (`git rm --cached scripts/setup-github.sh && git checkout -- scripts/setup-github.sh`) |
 | Dependabot PRs have no labels | Labels don't exist yet | Run `scripts/setup-github.sh --apply labels` |
 
-## 13. Owner and team checklists
+## 13. Admin and team checklists
 
-**Repository owner (Ammar):**
-- [ ] Rotate the EmailJS credentials (SECURITY.md → *Known open item*). Confirm in an issue **without pasting any value**.
-- [ ] Check *Settings → Billing and plans*: is GitHub Pro active? If not, apply for the Student Developer Pack.
+**Organization admins:**
+- [ ] Invite the other team members to `blood-connect-team` (Owner role for at least one more person; Member with write access for the rest).
+- [ ] Make sure the EmailJS credentials committed in the original hackathon repository were rotated (SECURITY.md → *Known open item*). Confirm in an issue **without pasting any value**.
 - [ ] Review and merge the DevOps PR (CI workflow + lockfile + templates + docs).
-- [ ] After team agreement, run `scripts/setup-github.sh` (dry run), then `--apply` for: `labels`, `milestones`, `repo-settings`, `security`, `project`.
-- [ ] Configure the Project's Status options, views and workflows (§8).
-- [ ] Apply branch protection (§5.3) and verify it with a failing test PR.
-- [ ] Decide visibility (§6), then delete the personal branches (§7) after team approval.
-- [ ] Add Anusha's and Waniya's GitHub usernames to `.github/CODEOWNERS` once confirmed, and make sure all four have write access.
+- [ ] Run `scripts/setup-github.sh` (dry run), then `--apply` for: `repo-settings`, `security` (labels, milestones and the Project are already set up).
+- [ ] Configure the Project's views and workflows (§8).
+- [ ] After a second member has joined: apply branch protection (§5.3) and verify it with a failing test PR.
+- [ ] Add every member's GitHub username to `.github/CODEOWNERS` (owners must have write access).
 - [ ] Decide on hosting (§10) before any deployment work.
 
 **Every team member:**
-- [ ] Share your exact GitHub username with the owner.
+- [ ] Accept the organization invitation; share your exact GitHub username.
+- [ ] Clone the organization repository (`git clone https://github.com/blood-connect-team/BloodConnect.git`), or point your existing clone at it: `git remote set-url origin https://github.com/blood-connect-team/BloodConnect.git`.
 - [ ] Install Node 24 (`.nvmrc`). Run `npm ci`, `npm run lint`, `npm test`, `npm run build` once locally.
 - [ ] Read [CONTRIBUTING.md](../CONTRIBUTING.md) and [SECURITY.md](../SECURITY.md).
-- [ ] Stop using the personal branch; delete your local copy after the remote one is removed.
-- [ ] Optional: activate the Student Developer Pack for your own account (Codespaces, Copilot).
+- [ ] Work only on task branches.
