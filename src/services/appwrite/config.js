@@ -1,4 +1,5 @@
 import { Client, Account, Databases } from 'appwrite';
+import log from '../../utils/logger';
 
 const requiredEnvVars = {
     VITE_APPWRITE_ENDPOINT: import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1',
@@ -35,7 +36,7 @@ export default client;
 
 // Helpful debug log for developers (will appear in browser console)
 try {
-    console.info('Appwrite config:', {
+    log('Appwrite config:', {
         endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1',
         projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
         databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
