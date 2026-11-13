@@ -6,6 +6,7 @@ import { requestService } from '../../services/requestService';
 import { findMatchingDonors } from '../../services/matchingService';
 import { sendEmailAlert } from '../../services/emailService';
 import { normalizeBloodGroup } from '../../utils/bloodGroupNormalizer';
+import log from '../../utils/logger';
 
 const BLOOD_GROUPS = [
   'O Negative (Emergency Universal)', 'O Positive', 'A Positive', 'A Negative',
@@ -117,7 +118,7 @@ export default function EmergencyRequest() {
             urgency: f.urgency
           })
           .then(() => {
-            console.log(`Email sent to ${donor.email}`);
+            log(`Email sent to ${donor.email}`)
           })
           .catch(err => {
             console.warn(`Email send failed for ${donor.email}:`, err?.message);

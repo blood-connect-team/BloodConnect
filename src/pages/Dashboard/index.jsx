@@ -5,6 +5,7 @@ import { requestService } from '../../services/requestService';
 import { sendEmailAlert } from '../../services/emailService';
 import { notificationService } from '../../services/notificationService';
 import { normalizeBloodGroup } from '../../utils/bloodGroupNormalizer';
+import log from '../../utils/logger';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -72,12 +73,12 @@ export default function Dashboard() {
         console.warn('WhatsApp link generation failed. Phone:', currentDonor.phone);
         return;
       }
-      
+        
       toast.success('Opening WhatsApp...');
-      console.log('Opening WhatsApp link:', waLink);
+      log('Opening WhatsApp link:', waLink)
       
       // Open WhatsApp link in new tab
-      window.open(waLink, '_blank');
+window.open(waLink, '_blank', 'noopener,noreferrer');
     } catch (error) {
       console.error('Error sending alert:', error);
       toast.error('Failed to send alert: ' + (error.message || 'Unknown error'));
