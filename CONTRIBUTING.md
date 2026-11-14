@@ -121,7 +121,8 @@ All conversations must be resolved before merging.
 When there is **≥1 approval** (2 for security-sensitive PRs), the `ci` check is **green** and every conversation is resolved, **the author** clicks **Squash and merge**.
 
 - The issue closes and moves to **Done** automatically, and the branch is deleted.
-- For UI changes, check the preview or staging deployment once it exists. If something broke, open a bug linked to the PR and fix forward.
+- **Before approving**, the reviewer opens the PR's **View deployment** link (preview at `https://<branch>.blood-connect-65z.pages.dev`) and checks the change works there.
+- After merge, the production deploy **waits for an approver** (*Actions → Review deployments*). Once approved, it goes live at `https://blood-connect-65z.pages.dev`. If something broke, roll back (docs/DEVOPS.md §10.2), open a bug linked to the PR and fix forward.
 
 ## 9. Release an issue you can't finish
 
