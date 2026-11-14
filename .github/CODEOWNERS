@@ -3,40 +3,38 @@
 # (other than the PR author) must approve changes to these paths.
 # Team convention on top of that: security-sensitive PRs need TWO approvals (see CONTRIBUTING.md).
 #
-# Only GitHub usernames verified from the project's commit history are listed:
-#   arhamnasirkhan (organization admin), ammarusmani729.
+# Owners are the four team members (usernames verified from commits and organization invitations):
+#   arhamnasirkhan, ammarusmani729, AnushaAbbasy, WaniyaSiddiqui.
 # Code owners must be members of the blood-connect-team organization with write access;
-# owners without access are ignored by GitHub (until they join).
-# TODO (organization admin): add Anusha's and Waniya's exact GitHub usernames to every line
-# below once they have joined, so no single person becomes the bottleneck.
+# owners who have not joined yet are ignored by GitHub until they do.
 # After pushing, check Settings → Code / the CODEOWNERS file view for syntax errors.
 #
 # Paths not listed here have no code owner: any team member may review them.
 # When several patterns match, the LAST matching line wins.
 
 # CI/CD, templates and repository automation
-/.github/                    @ammarusmani729 @arhamnasirkhan
+/.github/                    @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
 
 # Dependency and environment configuration (supply chain, secrets hygiene)
-/package.json                @ammarusmani729 @arhamnasirkhan
-/package-lock.json           @ammarusmani729 @arhamnasirkhan
-/.nvmrc                      @ammarusmani729 @arhamnasirkhan
-/.gitignore                  @ammarusmani729 @arhamnasirkhan
-/.env.example                @ammarusmani729 @arhamnasirkhan
+/package.json                @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
+/package-lock.json           @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
+/.nvmrc                      @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
+/.gitignore                  @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
+/.env.example                @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
 
 # Backend access, authentication and security-sensitive services
-/src/services/               @ammarusmani729 @arhamnasirkhan
-/src/lib/                    @ammarusmani729 @arhamnasirkhan
-/src/app/providers/          @ammarusmani729 @arhamnasirkhan
+/src/services/               @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
+/src/lib/                    @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
+/src/app/providers/          @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
 
 # Route protection
-/src/app/router/             @ammarusmani729 @arhamnasirkhan
+/src/app/router/             @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
 
 # Node scripts that use service credentials
-/scripts/                    @ammarusmani729 @arhamnasirkhan
+/scripts/                    @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
 
 # Future Supabase migrations, access-control (RLS) policies and Edge Functions
-/supabase/                   @ammarusmani729 @arhamnasirkhan
+/supabase/                   @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui
 
 # Security policy
-/SECURITY.md                 @ammarusmani729 @arhamnasirkhan
+/SECURITY.md                 @ammarusmani729 @arhamnasirkhan @AnushaAbbasy @WaniyaSiddiqui

@@ -226,21 +226,27 @@ Hosting: **Cloudflare Pages, free plan**, deployed from GitHub Actions with Clou
 ```
 PR to main ──► ci (lint · test · build) ──► deploy-preview ──► "View deployment" link on the PR
                                               https://<branch>.blood-connect-65z.pages.dev
-merge to main ──► ci ──► deploy-production WAITS ──► approver clicks "Approve and deploy"
-                                                         └─► https://blood-connect-65z.pages.dev
+reviewer approves ──► auto-merge (squash) ──► ci on main ──► deploy-production
+                                                              └─► https://blood-connect-65z.pages.dev
+reviewer requests changes ──► PR stays open; developer pushes a fix ──► new preview ──► review again
 ```
 
 | Job | Runs when | Environment | Approval | URL |
 |---|---|---|---|---|
 | `deploy-preview` | PR from a branch of this repo, after `ci` passes (not for forks or Dependabot) | `preview` | none | `https://<branch-name>.blood-connect-65z.pages.dev` (updated on every push to the PR) |
-| `deploy-production` | push to `main` (i.e. a merged PR), after `ci` passes | `production` | **required reviewer** | `https://blood-connect-65z.pages.dev` |
+| `deploy-production` | push to `main` (i.e. an approved, merged PR), after `ci` passes | `production` (`main` only) | none: the **PR approval** is the release decision | `https://blood-connect-65z.pages.dev` |
 
 - **Deploys happen only after the `ci` job passes** (`needs: ci`). A failing lint, test or build means no deployment.
-- **Production approval:** *Actions → the run → Review deployments → Approve and deploy*.
-  - The `production` environment only accepts the `main` branch.
-  - Approvers are set in *Settings → Environments → production → Required reviewers*.
-  - When the team has joined, add the organization owners there and turn on **Prevent self-review**, so the person who merged cannot approve their own release.
-- **One production deploy at a time.** If several merges wait for approval, the newest waiting one replaces the older ones.
+- **Release model: the PR review is the gate.** Nothing reaches `main` (and therefore production) without:
+  - ≥1 approving review from someone other than the author;
+  - green `ci` and `gitleaks`;
+  - resolved conversations.
+
+  Branch protection enforces this (§5). New commits dismiss earlier approvals.
+- **Auto-merge** is enabled on the repository. The author turns it on per PR (*Enable auto-merge → Squash and merge*), so the approval merges and releases without further clicks.
+- The `production` environment only accepts the `main` branch.
+- **Optional second gate:** for risky periods (e.g. right after the Supabase migration), add *Required reviewers* to *Settings → Environments → production*, and production waits for a click again. Remove them to return to review-driven releases.
+- **One production deploy at a time.** Deploys queue in order of merge.
 - **SPA routing:** Cloudflare Pages serves `index.html` for unknown paths when the build has no top-level `404.html`, so React Router routes work on refresh.
 - **Security headers:** [`public/_headers`](../public/_headers) (nosniff, referrer policy, no framing, permissions policy). A Content-Security-Policy follows once backend domains are final.
 - **The Pages project `blood-connect`** is created automatically by the first deploy (production branch `main`). The name `blood-connect.pages.dev` was already taken, so Cloudflare assigned the subdomain **`blood-connect-65z.pages.dev`**. A custom domain can be added later in the Pages project settings.
@@ -253,7 +259,7 @@ merge to main ──► ci ──► deploy-production WAITS ──► approver 
    gh secret set CLOUDFLARE_API_TOKEN --repo blood-connect-team/BloodConnect
    gh secret set CLOUDFLARE_ACCOUNT_ID --repo blood-connect-team/BloodConnect
    ```
-3. Environments `preview` and `production` exist (production: required reviewers + `main` only).
+3. Environments `preview` (the dev link; no rules) and `production` (`main` only; no required reviewers, because the PR approval is the gate) exist.
 4. Frontend configuration per environment goes in *Settings → Environments → <env> → Variables* (`VITE_*` names; public values only). **Previews must never use production data.**
 5. Give at least one more team member access to the Cloudflare account (*Manage account → Members*) so hosting has two admins.
 
