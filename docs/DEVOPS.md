@@ -202,8 +202,8 @@ scripts/setup-github.sh --apply labels      # apply one step at a time after app
 | Environment | Frontend | Backend | Data | Status |
 |---|---|---|---|---|
 | **Local** | `npm run dev` | Appwrite Cloud via `.env.local` (project currently **paused**); later Supabase local stack or the mock mode (blueprint NEW-03) | Synthetic only | Works for UI; backend calls fail while Appwrite is paused |
-| **Preview / staging** | Per-PR preview on Cloudflare Pages (`<branch>.blood-connect.pages.dev`), `preview` environment | Future Supabase project "staging" | Synthetic + team test accounts | Frontend deploys live (§10); backend pending the Supabase migration |
-| **Production** | `blood-connect.pages.dev` from `main`, `production` environment | Future Supabase project "production" | Real users | Deploys after an approver releases it (§10). Invite real users only after the beta gate (blueprint Part C). |
+| **Preview / staging** | Per-PR preview on Cloudflare Pages (`<branch>.blood-connect-65z.pages.dev`), `preview` environment | Future Supabase project "staging" | Synthetic + team test accounts | Frontend deploys live (§10); backend pending the Supabase migration |
+| **Production** | `blood-connect-65z.pages.dev` from `main`, `production` environment | Future Supabase project "production" | Real users | Deploys after an approver releases it (§10). Invite real users only after the beta gate (blueprint Part C). |
 
 Local development never needs production credentials.
 
@@ -225,15 +225,15 @@ Hosting: **Cloudflare Pages, free plan**, deployed from GitHub Actions with Clou
 
 ```
 PR to main ──► ci (lint · test · build) ──► deploy-preview ──► "View deployment" link on the PR
-                                              https://<branch>.blood-connect.pages.dev
+                                              https://<branch>.blood-connect-65z.pages.dev
 merge to main ──► ci ──► deploy-production WAITS ──► approver clicks "Approve and deploy"
-                                                         └─► https://blood-connect.pages.dev
+                                                         └─► https://blood-connect-65z.pages.dev
 ```
 
 | Job | Runs when | Environment | Approval | URL |
 |---|---|---|---|---|
-| `deploy-preview` | PR from a branch of this repo, after `ci` passes (not for forks or Dependabot) | `preview` | none | `https://<branch-name>.blood-connect.pages.dev` (updated on every push to the PR) |
-| `deploy-production` | push to `main` (i.e. a merged PR), after `ci` passes | `production` | **required reviewer** | `https://blood-connect.pages.dev` |
+| `deploy-preview` | PR from a branch of this repo, after `ci` passes (not for forks or Dependabot) | `preview` | none | `https://<branch-name>.blood-connect-65z.pages.dev` (updated on every push to the PR) |
+| `deploy-production` | push to `main` (i.e. a merged PR), after `ci` passes | `production` | **required reviewer** | `https://blood-connect-65z.pages.dev` |
 
 - **Deploys happen only after the `ci` job passes** (`needs: ci`). A failing lint, test or build means no deployment.
 - **Production approval:** *Actions → the run → Review deployments → Approve and deploy*.
@@ -243,7 +243,8 @@ merge to main ──► ci ──► deploy-production WAITS ──► approver 
 - **One production deploy at a time.** If several merges wait for approval, the newest waiting one replaces the older ones.
 - **SPA routing:** Cloudflare Pages serves `index.html` for unknown paths when the build has no top-level `404.html`, so React Router routes work on refresh.
 - **Security headers:** [`public/_headers`](../public/_headers) (nosniff, referrer policy, no framing, permissions policy). A Content-Security-Policy follows once backend domains are final.
-- **The Pages project `blood-connect`** is created automatically by the first deploy (production branch `main`).
+- **The Pages project `blood-connect`** is created automatically by the first deploy (production branch `main`). The name `blood-connect.pages.dev` was already taken, so Cloudflare assigned the subdomain **`blood-connect-65z.pages.dev`**. A custom domain can be added later in the Pages project settings.
+- Right after the very first deploy of a new project, Cloudflare needs a minute or two to issue the TLS certificate. Until then, preview links show `ERR_SSL_VERSION_OR_CIPHER_MISMATCH`.
 
 ### 10.1 One-time setup (organization admin)
 1. Free Cloudflare account. Create an **API token** (*My Profile → API Tokens → Create Custom Token*) with **only** *Account → Cloudflare Pages → Edit* on your account.
