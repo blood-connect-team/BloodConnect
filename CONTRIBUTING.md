@@ -84,7 +84,7 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`. Use `fix(securi
 2. Fill the template: what and why, tests performed, screenshots at desktop **and** 375 px (synthetic data), the security/privacy and database checklists, known limitations.
 3. **PR title = the squash commit message on `main`**, so use the commit format above.
 4. Keep it small: aim for under ~400 changed lines (lockfiles excluded). Split bigger work.
-5. Click **Ready for review**, move the issue to **In Review**, and request **one** reviewer. CODEOWNERS adds required reviewers automatically for sensitive paths: `.github/`, `src/services/`, `src/app/router/`, `scripts/`, dependency files, and the future `supabase/`.
+5. Click **Ready for review** and move the issue to **In Review**. GitHub automatically requests a review from the **release owners**, Ammar and Arham (`.github/CODEOWNERS`). You may also request a review from any teammate.
 6. **Turn on auto-merge:** click **Enable auto-merge → Squash and merge** on the PR (or run `gh pr merge --auto --squash`). From then on, an approval is all it takes to release.
 
 **What happens automatically** (no waiting for anyone):
@@ -98,9 +98,11 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`. Use `fix(securi
 
 ## 6. Reviews
 
-- **Your approval is the production release.** With auto-merge on, approving merges the PR and deploys it to production. So, **before approving**, open the PR's **View deployment** link and check that the change works there.
+- **Only a release owner's approval releases.** Every PR needs an approval from **Ammar or Arham**, never from the PR's own author. That approval auto-merges the PR and deploys it to production. So, **before approving**, a release owner opens the PR's **View deployment** link and checks that the change works there.
+- Any teammate can (and should) review, comment and test on the preview link. Their approvals show on the PR but do not merge it on their own.
+- If a release owner authors the PR, the **other** release owner must approve it.
 - Reviewers aim to respond within **2 days**. If there is no response in 3 days, ask someone else in the weekly update.
-- **Security-sensitive PRs need 2 approvals, including a code owner.** This covers auth, access rules/RLS, migrations, `scripts/`, `.github/`, and anything labelled `security-review`.
+- **Security-sensitive PRs need 2 approvals (team convention): a release owner plus one more teammate.** This covers auth, access rules/RLS, migrations, `scripts/`, `.github/`, and anything labelled `security-review`.
 
 **Reviewers check:**
 - **Correctness:** every acceptance criterion is met.
@@ -125,7 +127,7 @@ All conversations must be resolved before merging.
 ## 8. Merge and release
 
 A PR merges **automatically** once all of these are true:
-- it has ≥1 approval (team convention: 2 for security-sensitive PRs, including a code owner);
+- it is approved by a **release owner** (Ammar or Arham), and for security-sensitive PRs also by one more teammate;
 - `ci` and `gitleaks` are green;
 - every conversation is resolved.
 

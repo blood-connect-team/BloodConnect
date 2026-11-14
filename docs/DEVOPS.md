@@ -112,9 +112,9 @@ Do not bulk-update dependencies by hand (`npm update` / `npm audit fix --force`)
 | Setting | Value |
 |---|---|
 | Require a pull request before merging | on |
-| Required approving reviews | **1** (team convention: **2** for security-sensitive PRs, incl. a code owner) |
+| Required approving reviews | **1** (team convention: **2** for security-sensitive PRs: a release owner + one teammate) |
 | Dismiss stale approvals when new commits are pushed | on |
-| Require review from Code Owners | on (paths in [`.github/CODEOWNERS`](../.github/CODEOWNERS)) |
+| Require review from Code Owners | **on**: [`.github/CODEOWNERS`](../.github/CODEOWNERS) makes the **release owners (Ammar, Arham)** owners of every file, so only their approval can merge (and release) a PR |
 | Require conversation resolution | on |
 | Required status checks | **`ci`** (add **`gitleaks`** after its first green run) |
 | Require branch to be up to date | off (saves CI minutes; the push-to-`main` CI run catches combined breakage) |
@@ -238,7 +238,7 @@ reviewer requests changes ──► PR stays open; developer pushes a fix ──
 
 - **Deploys happen only after the `ci` job passes** (`needs: ci`). A failing lint, test or build means no deployment.
 - **Release model: the PR review is the gate.** Nothing reaches `main` (and therefore production) without:
-  - ≥1 approving review from someone other than the author;
+  - an approving review from a **release owner** (Ammar or Arham) who is not the author;
   - green `ci` and `gitleaks`;
   - resolved conversations.
 
