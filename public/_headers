@@ -1,0 +1,7 @@
+# Security headers for every page served by Cloudflare Pages (copied to dist/ by Vite).
+# A Content-Security-Policy will be added once the backend domains are final (Supabase migration).
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: camera=(), microphone=(), geolocation=()

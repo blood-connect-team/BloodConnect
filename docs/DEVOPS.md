@@ -22,7 +22,7 @@ push to main ──► CI "ci" again (catches combinations of PRs that are fine 
 7. [Branches](#7-branches)
 8. [GitHub Project, labels and milestones](#8-github-project-labels-and-milestones)
 9. [Environments and secrets](#9-environments-and-secrets)
-10. [Deployment](#10-deployment)
+10. [Deployment (CD)](#10-deployment-cd)
 11. [Release process](#11-release-process)
 12. [Common CI failures and fixes](#12-common-ci-failures-and-fixes)
 13. [Admin and team checklists](#13-admin-and-team-checklists)
@@ -202,8 +202,8 @@ scripts/setup-github.sh --apply labels      # apply one step at a time after app
 | Environment | Frontend | Backend | Data | Status |
 |---|---|---|---|---|
 | **Local** | `npm run dev` | Appwrite Cloud via `.env.local` (project currently **paused**); later Supabase local stack or the mock mode (blueprint NEW-03) | Synthetic only | Works for UI; backend calls fail while Appwrite is paused |
-| **Staging** | PR preview deployments + a staging URL | Future Supabase project "staging" | Synthetic + team test accounts | Not set up (needs hosting decision + Supabase migration) |
-| **Production** | Deploy from `main` | Future Supabase project "production" | Real users | **Disabled** until the beta gate (blueprint Part C) |
+| **Preview / staging** | Per-PR preview on Cloudflare Pages (`<branch>.blood-connect.pages.dev`), `preview` environment | Future Supabase project "staging" | Synthetic + team test accounts | Frontend deploys live (§10); backend pending the Supabase migration |
+| **Production** | `blood-connect.pages.dev` from `main`, `production` environment | Future Supabase project "production" | Real users | Deploys after an approver releases it (§10). Invite real users only after the beta gate (blueprint Part C). |
 
 Local development never needs production credentials.
 
@@ -219,37 +219,49 @@ Local development never needs production credentials.
 
 `.gitignore` ignores `.env` and `.env.*` (except `.env.example`), plus `*.dump`, `*.backup` and `/backups/`. Every external account (Appwrite, EmailJS, Supabase, hosting) should have **at least two** team admins.
 
-## 10. Deployment
+## 10. Deployment (CD)
 
-**Current state (verified):** no hosting provider or deployment configuration exists in the repo (no `vercel.json`, `netlify.toml`, `wrangler.*`, `_redirects` or `_headers`), and no deployment is referenced. **Nothing has been deployed.**
+Hosting: **Cloudflare Pages, free plan**, deployed from GitHub Actions with Cloudflare's official `wrangler-action` (Direct Upload; no Cloudflare build minutes used). Workflow: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
-**Free-tier comparison** (vendor pages read on 2026-11-12; re-check before signing up):
+```
+PR to main ──► ci (lint · test · build) ──► deploy-preview ──► "View deployment" link on the PR
+                                              https://<branch>.blood-connect.pages.dev
+merge to main ──► ci ──► deploy-production WAITS ──► approver clicks "Approve and deploy"
+                                                         └─► https://blood-connect.pages.dev
+```
 
-| | Cloudflare Pages (Free) | Netlify (Free) | Vercel (Hobby) |
-|---|---|---|---|
-| Builds | 500/month, 1 concurrent | Credit-based: 300 credits; a production deploy costs 15 | 100 deployments/day |
-| Preview deployments | Unlimited | Unlimited deploy previews | Yes |
-| Usage restrictions | none stated on the limits page | none found | **Non-commercial, personal use only**; no team collaboration features |
-| SPA routing | Automatic when there is no top-level `404.html` | Needs a `_redirects` rule | Needs `vercel.json` rewrites |
-| Headers file | `_headers` | `_headers` | `vercel.json` |
+| Job | Runs when | Environment | Approval | URL |
+|---|---|---|---|---|
+| `deploy-preview` | PR from a branch of this repo, after `ci` passes (not for forks or Dependabot) | `preview` | none | `https://<branch-name>.blood-connect.pages.dev` (updated on every push to the PR) |
+| `deploy-production` | push to `main` (i.e. a merged PR), after `ci` passes | `production` | **required reviewer** | `https://blood-connect.pages.dev` |
 
-**Recommendation: Cloudflare Pages.** It has the most generous build allowance, no non-commercial clause, SPA routing without extra config, and team members can be added to the Cloudflare account. **Do not create it until the owner approves (blueprint decision D-06).**
+- **Deploys happen only after the `ci` job passes** (`needs: ci`). A failing lint, test or build means no deployment.
+- **Production approval:** *Actions → the run → Review deployments → Approve and deploy*.
+  - The `production` environment only accepts the `main` branch.
+  - Approvers are set in *Settings → Environments → production → Required reviewers*.
+  - When the team has joined, add the organization owners there and turn on **Prevent self-review**, so the person who merged cannot approve their own release.
+- **One production deploy at a time.** If several merges wait for approval, the newest waiting one replaces the older ones.
+- **SPA routing:** Cloudflare Pages serves `index.html` for unknown paths when the build has no top-level `404.html`, so React Router routes work on refresh.
+- **Security headers:** [`public/_headers`](../public/_headers) (nosniff, referrer policy, no framing, permissions policy). A Content-Security-Policy follows once backend domains are final.
+- **The Pages project `blood-connect`** is created automatically by the first deploy (production branch `main`).
 
-**Deployment design (once approved):**
-1. Connect the repo through the Cloudflare Pages GitHub integration. Build command `npm run build`, output `dist`, Node version from `.nvmrc` (or set `NODE_VERSION=24`).
-2. **Preview deployments:** every PR branch gets a preview URL, configured with *Preview* environment variables pointing to the **staging** backend (synthetic data only).
-3. **Staging:** the preview environment of `main`, or a dedicated `staging` branch alias.
-4. **Production:** the production branch is `main`. Keep **automatic production deployments disabled** until the beta gate; deploy production manually from the dashboard after a release is tagged.
-5. **Security headers:** add `public/_headers` in the hosting PR:
+### 10.1 One-time setup (organization admin)
+1. Free Cloudflare account. Create an **API token** (*My Profile → API Tokens → Create Custom Token*) with **only** *Account → Cloudflare Pages → Edit* on your account.
+2. Store the token and your **Account ID** (Cloudflare dashboard → *Account home* → *Account details*) as **repository secrets**. Run this in the repo folder; each command prompts for the value, so it never appears in history or chat:
    ```
-   /*
-     X-Content-Type-Options: nosniff
-     Referrer-Policy: strict-origin-when-cross-origin
-     X-Frame-Options: DENY
-     Permissions-Policy: camera=(), microphone=(), geolocation=()
+   gh secret set CLOUDFLARE_API_TOKEN --repo blood-connect-team/BloodConnect
+   gh secret set CLOUDFLARE_ACCOUNT_ID --repo blood-connect-team/BloodConnect
    ```
-   Add a Content-Security-Policy after the Supabase migration, when the backend domains are final.
-6. **Rollback:** in the Cloudflare dashboard → *Deployments*, pick the last good deployment → *Rollback*. Then fix forward with a PR, or revert the bad PR (`git revert`) through a new PR.
+3. Environments `preview` and `production` exist (production: required reviewers + `main` only).
+4. Frontend configuration per environment goes in *Settings → Environments → <env> → Variables* (`VITE_*` names; public values only). **Previews must never use production data.**
+5. Give at least one more team member access to the Cloudflare account (*Manage account → Members*) so hosting has two admins.
+
+### 10.2 Rollback
+- **Fast:** Cloudflare dashboard → *Workers & Pages → blood-connect → Deployments* → pick the last good production deployment → *Rollback*.
+- **Then fix forward:** revert the bad PR with a new PR (`git revert`). The next approved production deploy replaces the rollback.
+
+### 10.3 Limits (free plan, checked 2026-11-12)
+Cloudflare Pages Free: unlimited preview deployments, 100 projects, 20,000 files and 25 MiB per file per site. The 500 builds/month limit applies to Cloudflare's own Git builds, which we don't use (we upload from GitHub Actions). Re-check the limits page if usage grows.
 
 ## 11. Release process
 
@@ -286,7 +298,7 @@ At the end of a phase (or for a hotfix):
 - [ ] Configure the Project's views and workflows (§8).
 - [ ] After a second member has joined: apply branch protection (§5.3) and verify it with a failing test PR.
 - [ ] Add every member's GitHub username to `.github/CODEOWNERS` (owners must have write access).
-- [ ] Decide on hosting (§10) before any deployment work.
+- [ ] Complete the one-time CD setup (§10.1): Cloudflare token and account ID as secrets; production approvers.
 
 **Every team member:**
 - [ ] Accept the organization invitation; share your exact GitHub username.
