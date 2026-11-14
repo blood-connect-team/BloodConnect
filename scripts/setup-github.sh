@@ -7,8 +7,9 @@
 # Run --apply only after the team has approved the plan in docs/DEVOPS.md.
 #
 # Usage:  scripts/setup-github.sh [--apply] <step>...
-# Steps:  labels | milestones | repo-settings | security | project | branch-protection
-#         all  (= labels milestones repo-settings security project; NOT branch-protection)
+# Steps:  labels | milestones | repo-settings | security | project | rulesets | branch-protection
+#         all  (= labels milestones repo-settings security project; NOT rulesets/branch-protection)
+#         rulesets: recommended protection for main (checks for all; review bypass for org owners)
 # Env:    REPO=owner/name (default below), REQUIRED_CHECKS="ci" (space-separated),
 #         PROJECT_OWNER=<user> (account that owns the Project; default: repo owner)
 # Needs:  GitHub CLI (gh auth login): triage/write for labels+milestones, admin for settings steps;
@@ -31,7 +32,7 @@ for arg in "$@"; do
     --apply) APPLY=true ;;
     -h|--help) usage; exit 0 ;;
     all) STEPS+=(labels milestones repo-settings security project) ;;
-    labels|milestones|repo-settings|security|project|branch-protection) STEPS+=("$arg") ;;
+    labels|milestones|repo-settings|security|project|branch-protection|rulesets) STEPS+=("$arg") ;;
     *) echo "Unknown argument: $arg"; usage; exit 1 ;;
   esac
 done
@@ -228,6 +229,58 @@ step_branch_protection() {
   run_json "$json" api -X PUT "repos/$REPO/branches/main/protection" --silent
 }
 
+# Rulesets for main (recommended instead of classic branch protection):
+#  1) "main: required checks"  - status checks, no force push, no deletion. Nobody can bypass.
+#  2) "main: release review"   - PR + approval from a code owner (release owners in CODEOWNERS).
+#     Organization owners may bypass it when merging a PR (bypass_mode "pull_request"),
+#     so release owners can merge their own PRs once checks pass. No direct pushes for anyone.
+upsert_ruleset() {
+  local name="$1" json="$2" id
+  id="$(gh api "repos/$REPO/rulesets" --jq ".[] | select(.name==\"$name\") | .id" | head -n1)"
+  if [ -n "$id" ]; then
+    echo "ruleset exists, updating: $name (#$id)"
+    run_json "$json" api -X PUT "repos/$REPO/rulesets/$id" --silent
+  else
+    echo "ruleset create: $name"
+    run_json "$json" api -X POST "repos/$REPO/rulesets" --silent
+  fi
+}
+
+step_rulesets() {
+  echo "== Rulesets for main"
+  local checks="" c
+  for c in $REQUIRED_CHECKS; do checks="${checks:+$checks,}{\"context\":\"$c\"}"; done
+  upsert_ruleset "main: required checks" "{
+  \"name\": \"main: required checks\",
+  \"target\": \"branch\",
+  \"enforcement\": \"active\",
+  \"conditions\": {\"ref_name\": {\"include\": [\"~DEFAULT_BRANCH\"], \"exclude\": []}},
+  \"bypass_actors\": [],
+  \"rules\": [
+    {\"type\": \"deletion\"},
+    {\"type\": \"non_fast_forward\"},
+    {\"type\": \"required_status_checks\", \"parameters\": {
+      \"strict_required_status_checks_policy\": false,
+      \"required_status_checks\": [$checks]}}
+  ]
+}"
+  upsert_ruleset "main: release review" "{
+  \"name\": \"main: release review\",
+  \"target\": \"branch\",
+  \"enforcement\": \"active\",
+  \"conditions\": {\"ref_name\": {\"include\": [\"~DEFAULT_BRANCH\"], \"exclude\": []}},
+  \"bypass_actors\": [{\"actor_id\": 1, \"actor_type\": \"OrganizationAdmin\", \"bypass_mode\": \"pull_request\"}],
+  \"rules\": [
+    {\"type\": \"pull_request\", \"parameters\": {
+      \"required_approving_review_count\": 1,
+      \"require_code_owner_review\": true,
+      \"dismiss_stale_reviews_on_push\": true,
+      \"require_last_push_approval\": false,
+      \"required_review_thread_resolution\": true}}
+  ]
+}"
+}
+
 require_gh
 $APPLY && echo "MODE: APPLY (changes will be made to $REPO)" || echo "MODE: DRY RUN (nothing will change). Add --apply to make changes."
 for s in "${STEPS[@]}"; do
@@ -238,5 +291,6 @@ for s in "${STEPS[@]}"; do
     security) require_perm admin; step_security ;;
     project) step_project ;;
     branch-protection) require_perm admin; step_branch_protection ;;
+    rulesets) require_perm admin; step_rulesets ;;
   esac
 done

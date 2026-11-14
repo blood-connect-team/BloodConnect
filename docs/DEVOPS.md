@@ -107,20 +107,21 @@ Do not bulk-update dependencies by hand (`npm update` / `npm audit fix --force`)
 
 ## 5. Branch protection and required checks
 
-### 5.1 Target configuration for `main`
+### 5.1 Target configuration for `main` (two rulesets)
 
-| Setting | Value |
-|---|---|
-| Require a pull request before merging | on |
-| Required approving reviews | **1** (team convention: **2** for security-sensitive PRs: a release owner + one teammate) |
-| Dismiss stale approvals when new commits are pushed | on |
-| Require review from Code Owners | **on**: [`.github/CODEOWNERS`](../.github/CODEOWNERS) makes the **release owners (Ammar, Arham)** owners of every file, so only their approval can merge (and release) a PR |
-| Require conversation resolution | on |
-| Required status checks | **`ci`** (add **`gitleaks`** after its first green run) |
-| Require branch to be up to date | off (saves CI minutes; the push-to-`main` CI run catches combined breakage) |
-| Include administrators (`enforce_admins`) | on (the owner follows the same rules) |
-| Allow force pushes / deletions | off / off |
-| Merge settings | squash merge only, PR title as commit title, auto-delete head branches, "Update branch" button on |
+`main` is protected with two **repository rulesets** (free for public repos). They apply together:
+
+| Ruleset | Rules | Who can bypass |
+|---|---|---|
+| **main: required checks** | status checks **`ci`** and **`gitleaks`** must pass · no force pushes · branch cannot be deleted | **nobody** (release owners included) |
+| **main: release review** | changes only through a pull request · ≥1 approval · **review from a code owner** (the release owners Ammar and Arham, see [`.github/CODEOWNERS`](../.github/CODEOWNERS)) · new commits dismiss old approvals · conversations resolved | **organization owners** (Ammar, Arham), **only when merging a PR** |
+
+What this means in practice:
+- **Anusha's or Waniya's PR:** green checks **and** an approval from Ammar or Arham → (auto-)merge → production.
+- **Ammar's or Arham's own PR:** green checks → they may merge it themselves (*Merge without waiting for requirements*, which bypasses only the review ruleset) → production. Failing checks block them too.
+- **Direct pushes to `main`:** blocked for everyone.
+- Team conventions on top: 2 approvals for security-sensitive PRs; release owners ask each other to review risky changes.
+- Merge settings: squash merge only, PR title as commit title, auto-delete head branches, "Update branch" button, auto-merge allowed.
 
 ### 5.2 Plan requirement: who can actually enforce this
 
@@ -132,17 +133,19 @@ The repository is owned by the **`blood-connect-team` organization on the GitHub
 
 ### 5.3 How to apply (organization admin)
 ```bash
-# 1. Preview exactly what will change (no changes are made):
-scripts/setup-github.sh branch-protection
-# 2. After the CI workflow is on main and has run once, apply:
-scripts/setup-github.sh --apply branch-protection
-# 3. Later, also require the secret scan:
-REQUIRED_CHECKS="ci gitleaks" scripts/setup-github.sh --apply branch-protection
+# 1. Preview (no changes):
+REQUIRED_CHECKS="ci gitleaks" scripts/setup-github.sh rulesets
+# 2. Apply (creates or updates both rulesets; safe to re-run):
+REQUIRED_CHECKS="ci gitleaks" scripts/setup-github.sh --apply rulesets
 ```
-- Needs [GitHub CLI](https://cli.github.com/), `gh auth login` as an organization admin. Use Git Bash, WSL or macOS/Linux.
-- UI alternative: *Settings → Branches → Add branch protection rule* for `main`, with the values in §5.1.
-- **Verify:** open a test PR with a deliberate lint error. The `ci` check fails and the merge button stays blocked. Then push the fix.
-- **Emergency:** if `main` is broken and no reviewer is reachable, an organization admin may temporarily disable "Include administrators", merge the fix, and re-enable it. Record this in the PR description.
+- Needs [GitHub CLI](https://cli.github.com/), `gh auth login` as an organization owner. Use Git Bash, WSL or macOS/Linux (on Windows PowerShell: `& "<Git>inash.exe" scripts/setup-github.sh ...`).
+- **Both release owners must be organization Owners** (*Organization → People → Change role → Owner*), since the bypass is granted to the organization-owner role.
+- UI alternative: *Settings → Rules → Rulesets → New branch ruleset*, with the values in §5.1.
+- The older `branch-protection` step (classic protection) still exists but cannot express "owners may skip review but not checks". Use `rulesets`.
+- **Verify:**
+  - A test PR with a deliberate lint error cannot be merged by anyone.
+  - A teammate's PR cannot be merged until a release owner approves.
+- **Emergency:** if `main` is broken and checks cannot pass, an organization owner may temporarily set the "main: required checks" ruleset to *Disabled*, merge the fix, and re-enable it. Record this in the PR description.
 
 ## 6. Repository visibility
 
@@ -238,7 +241,7 @@ reviewer requests changes ──► PR stays open; developer pushes a fix ──
 
 - **Deploys happen only after the `ci` job passes** (`needs: ci`). A failing lint, test or build means no deployment.
 - **Release model: the PR review is the gate.** Nothing reaches `main` (and therefore production) without:
-  - an approving review from a **release owner** (Ammar or Arham) who is not the author;
+  - an approving review from a **release owner** (Ammar or Arham), or, for their own PRs, a release owner merging after green checks;
   - green `ci` and `gitleaks`;
   - resolved conversations.
 

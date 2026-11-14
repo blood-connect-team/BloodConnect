@@ -100,7 +100,7 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`. Use `fix(securi
 
 - **Only a release owner's approval releases.** Every PR needs an approval from **Ammar or Arham**, never from the PR's own author. That approval auto-merges the PR and deploys it to production. So, **before approving**, a release owner opens the PR's **View deployment** link and checks that the change works there.
 - Any teammate can (and should) review, comment and test on the preview link. Their approvals show on the PR but do not merge it on their own.
-- If a release owner authors the PR, the **other** release owner must approve it.
+- **Release owners' own PRs:** Ammar and Arham (organization owners) may merge their own PR without a review once `ci` and `gitleaks` are green. They use **Merge without waiting for requirements** (this bypasses only the review rule; failing checks still block). A review from the other release owner is still encouraged for anything risky.
 - Reviewers aim to respond within **2 days**. If there is no response in 3 days, ask someone else in the weekly update.
 - **Security-sensitive PRs need 2 approvals (team convention): a release owner plus one more teammate.** This covers auth, access rules/RLS, migrations, `scripts/`, `.github/`, and anything labelled `security-review`.
 
