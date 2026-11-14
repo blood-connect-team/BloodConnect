@@ -6,11 +6,8 @@ import { requestService } from '../../services/requestService';
 import { findMatchingDonors } from '../../services/matchingService';
 import { sendEmailAlert } from '../../services/emailService';
 import { normalizeBloodGroup } from '../../utils/bloodGroupNormalizer';
-
-const BLOOD_GROUPS = [
-  'O Negative (Emergency Universal)', 'O Positive', 'A Positive', 'A Negative',
-  'B Positive', 'B Negative', 'AB Positive', 'AB Negative',
-];
+import { BLOOD_GROUPS } from '../../constants/bloodGroups';
+import { validate } from './validate';
 
 const URGENCY_LEVELS = [
   { id: 'critical', label: 'Critical', sla: '15-20 Minutes', color: '#9B1C1C', bg: '#9B1C1C', textColor: '#fff' },
@@ -35,21 +32,13 @@ function ErrMsg({ msg }) {
   ) : null;
 }
 
-function validate(f) {
-  const e = {};
-  if (!f.hospital.trim()) e.hospital = 'Hospital name is required.';
-  if (!f.patient.trim()) e.patient = 'Patient identifier is required.';
-  if (!f.blood) e.blood = 'Blood group is required.';
-  if (!f.area.trim()) e.area = 'Delivery area is required.';
-  return e;
-}
-
-export default function EmergencyRequest() {
+export default function EmergencyRequest({ initialValues = {}, initialErrors = {} } = {}) {
   const navigate = useNavigate();
   const [f, setF] = useState({
-    hospital: '', patient: '', blood: BLOOD_GROUPS[0], urgency: 'critical', area: '', notes: '',
+    hospital: '', patient: '', blood: '', urgency: 'critical', area: '', notes: '',
+    ...initialValues,
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState(initialErrors);
   const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -215,11 +204,27 @@ export default function EmergencyRequest() {
                 <label htmlFor="er-blood" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>Blood Group Needed</label>
                 <div style={{ position: 'relative' }}>
                   <ChevronDown size={14} color="#9CA3AF" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                  <select id="er-blood" value={f.blood} onChange={e => set('blood', e.target.value)}
-                    style={{ ...inp(false), paddingRight: '32px', appearance: 'none', cursor: 'pointer' }}>
-                    {BLOOD_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                  <select
+                    id="er-blood"
+                    name="blood"
+                    value={f.blood}
+                    onChange={e => set('blood', e.target.value)}
+                    onBlur={() => blur('blood')}
+                    style={{
+                      ...inp(errors.blood),
+                      paddingRight: '32px',
+                      appearance: 'none',
+                      cursor: 'pointer',
+                      color: f.blood ? '#111827' : '#9CA3AF',
+                    }}
+                    onFocus={e => e.target.style.borderColor = '#FCA5A5'}
+                    onBlurCapture={e => e.target.style.borderColor = errors.blood ? '#FCA5A5' : '#E5E7EB'}
+                  >
+                    <option value="" disabled>Select blood group</option>
+                    {BLOOD_GROUPS.map(g => <option key={g} value={g} style={{ color: '#111827' }}>{g}</option>)}
                   </select>
                 </div>
+                <ErrMsg msg={errors.blood} />
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>Urgency Level</label>
@@ -320,7 +325,7 @@ export default function EmergencyRequest() {
             <div style={{ background: '#FEE2E2', padding: '20px 16px', textAlign: 'center', margin: '12px', borderRadius: '10px' }}>
               <div style={{ fontSize: '10px', fontWeight: 700, color: '#9CA3AF', letterSpacing: '1.5px', marginBottom: '4px' }}>PRODUCT TYPE</div>
               <div style={{ fontSize: '28px', fontWeight: 800, color: '#9B1C1C', letterSpacing: '-0.5px' }}>
-                {f.blood.includes('Negative') && f.blood.includes('O') ? 'O NEGATIVE' : f.blood.toUpperCase().replace(' (EMERGENCY UNIVERSAL)', '')}
+                {f.blood || '—'}
               </div>
               <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>2 Units Required</div>
             </div>
