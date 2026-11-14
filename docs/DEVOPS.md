@@ -107,20 +107,21 @@ Do not bulk-update dependencies by hand (`npm update` / `npm audit fix --force`)
 
 ## 5. Branch protection and required checks
 
-### 5.1 Target configuration for `main`
+### 5.1 Target configuration for `main` (two rulesets)
 
-| Setting | Value |
-|---|---|
-| Require a pull request before merging | on |
-| Required approving reviews | **1** (team convention: **2** for security-sensitive PRs, incl. a code owner) |
-| Dismiss stale approvals when new commits are pushed | on |
-| Require review from Code Owners | on (paths in [`.github/CODEOWNERS`](../.github/CODEOWNERS)) |
-| Require conversation resolution | on |
-| Required status checks | **`ci`** (add **`gitleaks`** after its first green run) |
-| Require branch to be up to date | off (saves CI minutes; the push-to-`main` CI run catches combined breakage) |
-| Include administrators (`enforce_admins`) | on (the owner follows the same rules) |
-| Allow force pushes / deletions | off / off |
-| Merge settings | squash merge only, PR title as commit title, auto-delete head branches, "Update branch" button on |
+`main` is protected with two **repository rulesets** (free for public repos). They apply together:
+
+| Ruleset | Rules | Who can bypass |
+|---|---|---|
+| **main: required checks** | status checks **`ci`** and **`gitleaks`** must pass · no force pushes · branch cannot be deleted | **nobody** (release owners included) |
+| **main: release review** | changes only through a pull request · ≥1 approval · **review from a code owner** (the release owners Ammar and Arham, see [`.github/CODEOWNERS`](../.github/CODEOWNERS)) · new commits dismiss old approvals · conversations resolved | **organization owners** (Ammar, Arham), **only when merging a PR** |
+
+What this means in practice:
+- **Anusha's or Waniya's PR:** green checks **and** an approval from Ammar or Arham → (auto-)merge → production.
+- **Ammar's or Arham's own PR:** green checks → they may merge it themselves (*Merge without waiting for requirements*, which bypasses only the review ruleset) → production. Failing checks block them too.
+- **Direct pushes to `main`:** blocked for everyone.
+- Team conventions on top: 2 approvals for security-sensitive PRs; release owners ask each other to review risky changes.
+- Merge settings: squash merge only, PR title as commit title, auto-delete head branches, "Update branch" button, auto-merge allowed.
 
 ### 5.2 Plan requirement: who can actually enforce this
 
@@ -132,17 +133,19 @@ The repository is owned by the **`blood-connect-team` organization on the GitHub
 
 ### 5.3 How to apply (organization admin)
 ```bash
-# 1. Preview exactly what will change (no changes are made):
-scripts/setup-github.sh branch-protection
-# 2. After the CI workflow is on main and has run once, apply:
-scripts/setup-github.sh --apply branch-protection
-# 3. Later, also require the secret scan:
-REQUIRED_CHECKS="ci gitleaks" scripts/setup-github.sh --apply branch-protection
+# 1. Preview (no changes):
+REQUIRED_CHECKS="ci gitleaks" scripts/setup-github.sh rulesets
+# 2. Apply (creates or updates both rulesets; safe to re-run):
+REQUIRED_CHECKS="ci gitleaks" scripts/setup-github.sh --apply rulesets
 ```
-- Needs [GitHub CLI](https://cli.github.com/), `gh auth login` as an organization admin. Use Git Bash, WSL or macOS/Linux.
-- UI alternative: *Settings → Branches → Add branch protection rule* for `main`, with the values in §5.1.
-- **Verify:** open a test PR with a deliberate lint error. The `ci` check fails and the merge button stays blocked. Then push the fix.
-- **Emergency:** if `main` is broken and no reviewer is reachable, an organization admin may temporarily disable "Include administrators", merge the fix, and re-enable it. Record this in the PR description.
+- Needs [GitHub CLI](https://cli.github.com/), `gh auth login` as an organization owner. Use Git Bash, WSL or macOS/Linux (on Windows PowerShell: `& "<Git>inash.exe" scripts/setup-github.sh ...`).
+- **Both release owners must be organization Owners** (*Organization → People → Change role → Owner*), since the bypass is granted to the organization-owner role.
+- UI alternative: *Settings → Rules → Rulesets → New branch ruleset*, with the values in §5.1.
+- The older `branch-protection` step (classic protection) still exists but cannot express "owners may skip review but not checks". Use `rulesets`.
+- **Verify:**
+  - A test PR with a deliberate lint error cannot be merged by anyone.
+  - A teammate's PR cannot be merged until a release owner approves.
+- **Emergency:** if `main` is broken and checks cannot pass, an organization owner may temporarily set the "main: required checks" ruleset to *Disabled*, merge the fix, and re-enable it. Record this in the PR description.
 
 ## 6. Repository visibility
 
@@ -226,21 +229,27 @@ Hosting: **Cloudflare Pages, free plan**, deployed from GitHub Actions with Clou
 ```
 PR to main ──► ci (lint · test · build) ──► deploy-preview ──► "View deployment" link on the PR
                                               https://<branch>.blood-connect-65z.pages.dev
-merge to main ──► ci ──► deploy-production WAITS ──► approver clicks "Approve and deploy"
-                                                         └─► https://blood-connect-65z.pages.dev
+reviewer approves ──► auto-merge (squash) ──► ci on main ──► deploy-production
+                                                              └─► https://blood-connect-65z.pages.dev
+reviewer requests changes ──► PR stays open; developer pushes a fix ──► new preview ──► review again
 ```
 
 | Job | Runs when | Environment | Approval | URL |
 |---|---|---|---|---|
 | `deploy-preview` | PR from a branch of this repo, after `ci` passes (not for forks or Dependabot) | `preview` | none | `https://<branch-name>.blood-connect-65z.pages.dev` (updated on every push to the PR) |
-| `deploy-production` | push to `main` (i.e. a merged PR), after `ci` passes | `production` | **required reviewer** | `https://blood-connect-65z.pages.dev` |
+| `deploy-production` | push to `main` (i.e. an approved, merged PR), after `ci` passes | `production` (`main` only) | none: the **PR approval** is the release decision | `https://blood-connect-65z.pages.dev` |
 
 - **Deploys happen only after the `ci` job passes** (`needs: ci`). A failing lint, test or build means no deployment.
-- **Production approval:** *Actions → the run → Review deployments → Approve and deploy*.
-  - The `production` environment only accepts the `main` branch.
-  - Approvers are set in *Settings → Environments → production → Required reviewers*.
-  - When the team has joined, add the organization owners there and turn on **Prevent self-review**, so the person who merged cannot approve their own release.
-- **One production deploy at a time.** If several merges wait for approval, the newest waiting one replaces the older ones.
+- **Release model: the PR review is the gate.** Nothing reaches `main` (and therefore production) without:
+  - an approving review from a **release owner** (Ammar or Arham), or, for their own PRs, a release owner merging after green checks;
+  - green `ci` and `gitleaks`;
+  - resolved conversations.
+
+  Branch protection enforces this (§5). New commits dismiss earlier approvals.
+- **Auto-merge** is enabled on the repository. The author turns it on per PR (*Enable auto-merge → Squash and merge*), so the approval merges and releases without further clicks.
+- The `production` environment only accepts the `main` branch.
+- **Optional second gate:** for risky periods (e.g. right after the Supabase migration), add *Required reviewers* to *Settings → Environments → production*, and production waits for a click again. Remove them to return to review-driven releases.
+- **One production deploy at a time.** Deploys queue in order of merge.
 - **SPA routing:** Cloudflare Pages serves `index.html` for unknown paths when the build has no top-level `404.html`, so React Router routes work on refresh.
 - **Security headers:** [`public/_headers`](../public/_headers) (nosniff, referrer policy, no framing, permissions policy). A Content-Security-Policy follows once backend domains are final.
 - **The Pages project `blood-connect`** is created automatically by the first deploy (production branch `main`). The name `blood-connect.pages.dev` was already taken, so Cloudflare assigned the subdomain **`blood-connect-65z.pages.dev`**. A custom domain can be added later in the Pages project settings.
@@ -253,7 +262,7 @@ merge to main ──► ci ──► deploy-production WAITS ──► approver 
    gh secret set CLOUDFLARE_API_TOKEN --repo blood-connect-team/BloodConnect
    gh secret set CLOUDFLARE_ACCOUNT_ID --repo blood-connect-team/BloodConnect
    ```
-3. Environments `preview` and `production` exist (production: required reviewers + `main` only).
+3. Environments `preview` (the dev link; no rules) and `production` (`main` only; no required reviewers, because the PR approval is the gate) exist.
 4. Frontend configuration per environment goes in *Settings → Environments → <env> → Variables* (`VITE_*` names; public values only). **Previews must never use production data.**
 5. Give at least one more team member access to the Cloudflare account (*Manage account → Members*) so hosting has two admins.
 

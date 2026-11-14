@@ -1,42 +1,17 @@
-# CODEOWNERS: reviewers GitHub requests automatically for security-sensitive paths.
-# With branch protection's "Require review from Code Owners", one listed owner
-# (other than the PR author) must approve changes to these paths.
-# Team convention on top of that: security-sensitive PRs need TWO approvals (see CONTRIBUTING.md).
+# CODEOWNERS: who must approve changes before they reach main (and therefore production).
 #
-# Only GitHub usernames verified from the project's commit history are listed:
-#   arhamnasirkhan (organization admin), ammarusmani729.
-# Code owners must be members of the blood-connect-team organization with write access;
-# owners without access are ignored by GitHub (until they join).
-# TODO (organization admin): add Anusha's and Waniya's exact GitHub usernames to every line
-# below once they have joined, so no single person becomes the bottleneck.
-# After pushing, check Settings → Code / the CODEOWNERS file view for syntax errors.
+# Release owners: Ammar (ammarusmani729) and Arham (arhamnasirkhan).
+# With branch protection's "Require review from Code Owners", EVERY pull request needs an
+# approving review from one of them (never from the PR's own author). Because an approved PR
+# is auto-merged and deployed, this approval is the production release decision.
 #
-# Paths not listed here have no code owner: any team member may review them.
-# When several patterns match, the LAST matching line wins.
+# Other team members review, comment and test on the preview link as usual; their approvals
+# are visible but do not, on their own, allow a merge.
+# Team convention on top: security-sensitive PRs (auth, access rules, migrations, scripts,
+# .github/) need a second approval from another team member as well.
+#
+# Owners must be organization members with write access.
+# Only one rule on purpose: more specific rules would replace this one for their paths
+# (the last matching pattern wins).
 
-# CI/CD, templates and repository automation
-/.github/                    @ammarusmani729 @arhamnasirkhan
-
-# Dependency and environment configuration (supply chain, secrets hygiene)
-/package.json                @ammarusmani729 @arhamnasirkhan
-/package-lock.json           @ammarusmani729 @arhamnasirkhan
-/.nvmrc                      @ammarusmani729 @arhamnasirkhan
-/.gitignore                  @ammarusmani729 @arhamnasirkhan
-/.env.example                @ammarusmani729 @arhamnasirkhan
-
-# Backend access, authentication and security-sensitive services
-/src/services/               @ammarusmani729 @arhamnasirkhan
-/src/lib/                    @ammarusmani729 @arhamnasirkhan
-/src/app/providers/          @ammarusmani729 @arhamnasirkhan
-
-# Route protection
-/src/app/router/             @ammarusmani729 @arhamnasirkhan
-
-# Node scripts that use service credentials
-/scripts/                    @ammarusmani729 @arhamnasirkhan
-
-# Future Supabase migrations, access-control (RLS) policies and Edge Functions
-/supabase/                   @ammarusmani729 @arhamnasirkhan
-
-# Security policy
-/SECURITY.md                 @ammarusmani729 @arhamnasirkhan
+*       @ammarusmani729 @arhamnasirkhan

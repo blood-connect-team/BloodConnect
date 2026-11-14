@@ -84,19 +84,25 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`. Use `fix(securi
 2. Fill the template: what and why, tests performed, screenshots at desktop **and** 375 px (synthetic data), the security/privacy and database checklists, known limitations.
 3. **PR title = the squash commit message on `main`**, so use the commit format above.
 4. Keep it small: aim for under ~400 changed lines (lockfiles excluded). Split bigger work.
-5. Click **Ready for review**, move the issue to **In Review**, and request **one** reviewer. CODEOWNERS adds required reviewers automatically for sensitive paths: `.github/`, `src/services/`, `src/app/router/`, `scripts/`, dependency files, and the future `supabase/`.
+5. Click **Ready for review** and move the issue to **In Review**. GitHub automatically requests a review from the **release owners**, Ammar and Arham (`.github/CODEOWNERS`). You may also request a review from any teammate.
+6. **Turn on auto-merge:** click **Enable auto-merge → Squash and merge** on the PR (or run `gh pr merge --auto --squash`). From then on, an approval is all it takes to release.
 
-**Automated checks on every PR:**
+**What happens automatically** (no waiting for anyone):
 
-| Check | What it does | Must pass? |
+| Step | When | Result |
 |---|---|---|
-| `ci` | `npm ci` → lint → tests → production build | **Yes** |
-| `gitleaks` | Scans the PR's commits for secrets (values redacted) | Yes, once required by the owner. Fix it anyway. |
+| `ci` | every push to the PR | `npm ci` → lint → tests → build. **Must pass.** |
+| `gitleaks` | every push to the PR | Scans the PR's commits for secrets (values redacted). **Must pass.** |
+| `deploy-preview` | as soon as `ci` passes | Your **dev link** `https://<branch>.blood-connect-65z.pages.dev`, shown as **View deployment** on the PR. Check your own work there; no reviewer is needed for this. |
+| auto-merge + `deploy-production` | when the reviewer **approves** (and all checks are green) | PR is squash-merged, `main` is built again, and the app goes live at `https://blood-connect-65z.pages.dev`. |
 
 ## 6. Reviews
 
+- **Only a release owner's approval releases.** Every PR needs an approval from **Ammar or Arham**, never from the PR's own author. That approval auto-merges the PR and deploys it to production. So, **before approving**, a release owner opens the PR's **View deployment** link and checks that the change works there.
+- Any teammate can (and should) review, comment and test on the preview link. Their approvals show on the PR but do not merge it on their own.
+- **Release owners' own PRs:** Ammar and Arham (organization owners) may merge their own PR without a review once `ci` and `gitleaks` are green. They use **Merge without waiting for requirements** (this bypasses only the review rule; failing checks still block). A review from the other release owner is still encouraged for anything risky.
 - Reviewers aim to respond within **2 days**. If there is no response in 3 days, ask someone else in the weekly update.
-- **Security-sensitive PRs need 2 approvals, including a code owner.** This covers auth, access rules/RLS, migrations, `scripts/`, `.github/`, and anything labelled `security-review`.
+- **Security-sensitive PRs need 2 approvals (team convention): a release owner plus one more teammate.** This covers auth, access rules/RLS, migrations, `scripts/`, `.github/`, and anything labelled `security-review`.
 
 **Reviewers check:**
 - **Correctness:** every acceptance criterion is met.
@@ -109,20 +115,27 @@ Comment prefixes: `blocking:` (must change) · `suggestion:` · `question:` · `
 
 ## 7. Resolve requested changes
 
-1. The reviewer selects **Request changes**, and the issue moves to **Changes Requested**.
-2. Push fixes as new commits (stale approvals are dismissed automatically).
+If the reviewer finds a bug, the PR goes back to the developer. Nothing reaches production:
+
+1. The reviewer selects **Request changes** (describe the bug), and the issue moves to **Changes Requested**. Auto-merge stays armed but cannot merge.
+2. The developer pushes fixes as new commits. `ci` runs again and the **dev link updates automatically**, so check the fix there.
 3. Reply to each comment, or resolve it with a short note.
-4. **Re-request review**, and the issue moves back to **In Review**.
+4. **Re-request review**, and the issue moves back to **In Review**. Any earlier approval was dismissed by the new commits, so a fresh approval is needed.
 
 All conversations must be resolved before merging.
 
-## 8. Merge
+## 8. Merge and release
 
-When there is **≥1 approval** (2 for security-sensitive PRs), the `ci` check is **green** and every conversation is resolved, **the author** clicks **Squash and merge**.
+A PR merges **automatically** once all of these are true:
+- it is approved by a **release owner** (Ammar or Arham), and for security-sensitive PRs also by one more teammate;
+- `ci` and `gitleaks` are green;
+- every conversation is resolved.
 
+If auto-merge was not enabled, the author or the reviewer clicks **Squash and merge**.
+
+- `main` is built again and `deploy-production` publishes it to `https://blood-connect-65z.pages.dev` (no second approval).
 - The issue closes and moves to **Done** automatically, and the branch is deleted.
-- **Before approving**, the reviewer opens the PR's **View deployment** link (preview at `https://<branch>.blood-connect-65z.pages.dev`) and checks the change works there.
-- After merge, the production deploy **waits for an approver** (*Actions → Review deployments*). Once approved, it goes live at `https://blood-connect-65z.pages.dev`. If something broke, roll back (docs/DEVOPS.md §10.2), open a bug linked to the PR and fix forward.
+- If something broke in production: roll back (docs/DEVOPS.md §10.2), open a bug linked to the PR, and fix forward.
 
 ## 9. Release an issue you can't finish
 

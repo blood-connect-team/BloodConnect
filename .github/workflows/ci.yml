@@ -4,8 +4,8 @@
 #
 # Delivery (Cloudflare Pages, free plan), only after the "ci" job passes:
 #   - pull request  -> deploy-preview: a live preview link per PR branch ("preview" environment)
-#   - push to main  -> deploy-production: waits for an approver in the "production" environment,
-#                      then publishes the production site.
+#   - push to main  -> deploy-production: publishes the production site. Pushes to main only come from
+#                      approved PRs (branch protection + auto-merge), so the PR review is the release gate.
 # Setup, secrets and rollback: docs/DEVOPS.md section 10.
 name: CI
 
