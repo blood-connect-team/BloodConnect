@@ -26,6 +26,7 @@ push to main ──► CI "ci" again (catches combinations of PRs that are fine 
 11. [Release process](#11-release-process)
 12. [Common CI failures and fixes](#12-common-ci-failures-and-fixes)
 13. [Admin and team checklists](#13-admin-and-team-checklists)
+14. [Database (Supabase)](#14-database-supabase)
 
 ---
 
@@ -204,8 +205,8 @@ scripts/setup-github.sh --apply labels      # apply one step at a time after app
 
 | Environment | Frontend | Backend | Data | Status |
 |---|---|---|---|---|
-| **Local** | `npm run dev` | Appwrite Cloud via `.env.local` (project currently **paused**); later Supabase local stack or the mock mode (blueprint NEW-03) | Synthetic only | Works for UI; backend calls fail while Appwrite is paused |
-| **Preview / staging** | Per-PR preview on Cloudflare Pages (`<branch>.blood-connect-65z.pages.dev`), `preview` environment | Future Supabase project "staging" | Synthetic + team test accounts | Frontend deploys live (§10); backend pending the Supabase migration |
+| **Local** | `npm run dev` | Supabase local stack (`npx supabase start`, needs Docker) or the mock mode (#47). The app still talks to the paused Appwrite until #20. | Synthetic only | UI works; data features wait for #18/#20 |
+| **Preview / staging** | Per-PR preview on Cloudflare Pages (`<branch>.blood-connect-65z.pages.dev`), `preview` environment | Supabase project **`blood-connect-staging`** (org `blood-connect-team`, Asia-Pacific, free), schema deployed by CI (§14) | Synthetic + team test accounts | Frontend live (§10); app wiring to Supabase in #18/#20 |
 | **Production** | `blood-connect-65z.pages.dev` from `main`, `production` environment | Future Supabase project "production" | Real users | Deploys after an approver releases it (§10). Invite real users only after the beta gate (blueprint Part C). |
 
 Local development never needs production credentials.
@@ -316,3 +317,47 @@ At the end of a phase (or for a hotfix):
 - [ ] Install Node 24 (`.nvmrc`). Run `npm ci`, `npm run lint`, `npm test`, `npm run build` once locally.
 - [ ] Read [CONTRIBUTING.md](../CONTRIBUTING.md) and [SECURITY.md](../SECURITY.md).
 - [ ] Work only on task branches.
+
+## 14. Database (Supabase)
+
+Decision: [ADR 0001](adr/0001-backend-platform.md). Everything lives in [`supabase/`](../supabase):
+
+| Path | What |
+|---|---|
+| `supabase/config.toml` | Local stack settings (auth redirect URLs for localhost, previews and production) |
+| `supabase/migrations/*.sql` | The schema, in order. **The only way the database changes.** |
+| `supabase/seed.sql` | Synthetic local/CI data only (reference data such as cities is a migration) |
+| `supabase/tests/database/*.test.sql` | pgTAP tests (RLS on every table, no access for browser roles yet, constraints) |
+
+**Hosted projects** (Supabase org **`blood-connect-team`**, free plan; kept separate from any personal org):
+
+| Project | Use | Settings |
+|---|---|---|
+| `blood-connect-staging` (Asia-Pacific) | previews, team testing, synthetic data | Data API on; **new tables are not auto-exposed** (grants are explicit in migrations); automatic RLS on |
+| production | later, before the beta gate | same settings |
+
+At least **two release owners** must be admins of the Supabase org (*Organization settings → Team → Invite → Owner/Administrator*).
+
+### 14.1 Changing the database
+1. `npx supabase migration new <short_name>` creates `supabase/migrations/<timestamp>_<short_name>.sql`. Write SQL there.
+   - New tables: enable RLS, grant only what is needed, and add policies.
+   - Never edit a migration that is already on `main`; add a new one.
+2. Add or extend tests in `supabase/tests/database/`.
+3. Locally (needs Docker): `npx supabase start`, then `npx supabase db reset` (applies all migrations + seed), then `npx supabase test db`.
+4. Open the PR. The **`db`** check runs the same steps on GitHub (real Postgres, lint, pgTAP). Database PRs need a code-owner review.
+5. After merge, the **`migrate-staging`** job (environment `staging`, `main` only) applies new migrations to the staging project. It runs a dry run first, then the real push. Check the job log.
+6. **Never** change tables in the Supabase dashboard (Table editor / SQL editor) on staging or production; that causes drift. Read-only queries are fine.
+
+### 14.2 Secret (organization admin, one time)
+`migrate-staging` needs one environment secret, **`SUPABASE_DB_URL`**: the staging project's **session pooler** connection string, with the database password filled in.
+- Get it from the dashboard: *Connect → Session pooler*.
+- It reaches only this database, never the whole Supabase account.
+- Copy the full string, then run:
+```powershell
+(Get-Clipboard).Trim() | & "C:\Program Files\GitHub CLI\gh.exe" secret set SUPABASE_DB_URL --env staging --repo blood-connect-team/BloodConnect
+```
+Never paste it in chat or on the command line by itself. If it leaks, reset the database password in Supabase (*Project settings → Database*) and set the secret again.
+
+### 14.3 Free-tier notes
+- Inactive free projects are paused. Restore from the dashboard (*Project → Restore*). Keep staging in regular use.
+- The built-in auth email is rate-limited; configure free custom SMTP before a public demo (#18).

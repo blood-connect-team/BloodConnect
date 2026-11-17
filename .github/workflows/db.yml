@@ -1,28 +1,36 @@
-# Database checks for Supabase migrations (#16).
-# Runs only when supabase/ changes: starts a real local Postgres with the Supabase CLI,
-# applies every migration plus seed.sql, lints the schema and runs the pgTAP tests in
-# supabase/tests. Status check name: "db". It is not a required check, because it is
-# path-filtered; database PRs also need a code-owner review.
+# Database pipeline for Supabase migrations (#16).
+#
+# Pull requests touching supabase/ -> job "db": start a real local Postgres with the Supabase CLI,
+#   apply every migration (+ seed.sql), lint the schema, run the pgTAP tests in supabase/tests.
+# Push to main touching supabase/migrations -> job "migrate-staging": apply new migrations to the
+#   hosted STAGING project (environment "staging", main branch only).
+#
+# The staging connection uses one secret, SUPABASE_DB_URL (environment "staging"): the project's
+# session-pooler connection string. It only reaches this one database, never the whole Supabase account.
+# "db" is not a required check (path-filtered); database PRs also need a code-owner review.
 name: Database
 
 on:
   pull_request:
     branches: [main]
     paths: ["supabase/**", ".github/workflows/db.yml"]
+  push:
+    branches: [main]
+    paths: ["supabase/migrations/**"]
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: db-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
   db:
     name: db
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    concurrency:
+      group: db-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -42,3 +50,34 @@ jobs:
 
       - name: Run database tests (pgTAP)
         run: supabase test db
+
+  migrate-staging:
+    name: migrate-staging
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    # Never run two migration deploys at the same time.
+    concurrency:
+      group: migrate-staging
+      cancel-in-progress: false
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.2.0
+
+      - name: Show pending migrations (dry run)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: supabase db push --remote="$SUPABASE_DB_URL" --dry-run --yes
+
+      - name: Apply migrations to staging
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: supabase db push --remote="$SUPABASE_DB_URL" --yes
