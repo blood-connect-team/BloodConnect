@@ -24,7 +24,7 @@ select is_empty(
 select ok(not has_table_privilege('anon', 'public.donors', 'select'), 'anon has no select privilege on donors');
 select ok(not has_table_privilege('anon', 'public.profiles', 'select'), 'anon has no select privilege on profiles');
 select ok(not has_table_privilege('anon', 'public.blood_requests', 'select'), 'anon has no select privilege on blood_requests');
-select ok(not has_table_privilege('authenticated', 'public.donors', 'select'), 'authenticated has no select privilege on donors (yet)');
+select ok(not has_table_privilege('anon', 'public.request_responses', 'select'), 'anon has no select privilege on responses');
 select ok(has_table_privilege('anon', 'public.cities', 'select'), 'anon may read the city list');
 
 -- Reference data: the city list is public and seeded
