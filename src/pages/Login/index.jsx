@@ -4,7 +4,41 @@ import toast from 'react-hot-toast';
 import { ArrowRight, KeyRound, Mail } from 'lucide-react';
 import { Logo } from '../../components/common/Logo';
 import { useAuth } from '../../app/providers/auth-context';
-import { sendLoginCode, verifyLoginCode } from '../../services/auth';
+import { devCodeLogin, devLoginEnabled, sendLoginCode, verifyLoginCode } from '../../services/auth';
+
+/** Preview/local builds only: log in to the shared synthetic dev account with its dev code. */
+function DevLogin() {
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await devCodeLogin(email, code);
+      toast.success('Logged in to the dev account.');
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const field = 'w-full h-10 px-3 rounded-lg border border-amber-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-100';
+  return (
+    <form onSubmit={submit} className="mx-8 mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+      <p className="text-xs font-bold text-amber-900">Dev / test account (preview only, synthetic data)</p>
+      <label htmlFor="dev-email" className="sr-only">Dev email</label>
+      <input id="dev-email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Dev email" className={field} />
+      <label htmlFor="dev-code" className="sr-only">Dev code</label>
+      <input id="dev-code" type="password" inputMode="numeric" autoComplete="current-password" value={code} onChange={(e) => setCode(e.target.value)} placeholder="Dev code" className={field} />
+      <button type="submit" disabled={busy || !email || !code} className="w-full h-10 rounded-lg bg-amber-600 hover:bg-amber-700 disabled:bg-gray-400 text-white text-sm font-bold">
+        {busy ? 'Logging in…' : 'Dev login'}
+      </button>
+    </form>
+  );
+}
 
 const safeNext = (value) => (value && value.startsWith('/') && !value.startsWith('//') ? value : '/dashboard');
 
@@ -109,6 +143,8 @@ export default function Login() {
             </div>
           </form>
         )}
+
+        {devLoginEnabled && <DevLogin />}
 
         <div className="px-8 pb-8 text-center text-xs text-gray-500">
           By continuing you agree that your contact details are shared only with people whose blood request you accept. <Link to="/" className="text-red-600 font-semibold">Back to home</Link>
