@@ -20,30 +20,20 @@ export const router = createBrowserRouter([
     path: '/',
     element: <MainLayout />,
     children: [
+      { index: true, element: <Landing /> },
+      { path: 'login', element: <Login /> },
+      { path: 'confirmation', element: <Confirmation /> },
+      { path: 'notifications', element: <Notifications /> },
       {
-        index: true,
-        element: <Landing />,
+        // Logged in, profile not required yet: this is where the profile is completed.
+        element: <ProtectedRoute requireProfile={false} />,
+        children: [{ path: 'register', element: <Register /> }],
       },
       {
-        path: 'register',
-        element: <Register />,
+        // Creating a request needs an account and a profile (#25).
+        element: <ProtectedRoute />,
+        children: [{ path: 'request', element: <EmergencyRequest /> }],
       },
-      {
-        path: 'login',
-        element: <Login />,
-      },
-      {
-        path: 'request',
-        element: <EmergencyRequest />,
-      },
-      {
-        path: 'confirmation',
-        element: <Confirmation />,
-      },
-      {
-        path: 'notifications',
-        element: <Notifications />,
-      }
     ],
   },
   {
@@ -52,30 +42,18 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <DashboardLayout />,
-        children: [
-          {
-            index: true,
-            element: <Dashboard />,
-          },
-          // Future nested routes
-          // { path: 'requests', element: <RequestsList /> },
-        ],
+        children: [{ index: true, element: <Dashboard /> }],
       },
     ],
   },
   {
     path: '/admin',
-    element: <ProtectedRoute isAuthenticated={true} />, // In reality, check for admin role
+    element: <ProtectedRoute />, // admin role check: #19
     children: [
       {
         element: <MainLayout />,
-        children: [
-          {
-            index: true,
-            element: <Admin />,
-          }
-        ],
+        children: [{ index: true, element: <Admin /> }],
       },
     ],
-  }
+  },
 ]);

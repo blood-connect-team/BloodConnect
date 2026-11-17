@@ -252,6 +252,16 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
+# Login emails must show the 6-digit code (the app logs in with email OTP, #18).
+# The hosted staging/production projects need the same template: Dashboard -> Authentication -> Emails.
+[auth.email.template.magic_link]
+subject = "Your Blood Connect login code"
+content_path = "./supabase/templates/login_code.html"
+
+[auth.email.template.confirmation]
+subject = "Your Blood Connect login code"
+content_path = "./supabase/templates/login_code.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
