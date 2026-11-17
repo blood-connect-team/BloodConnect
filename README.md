@@ -2,17 +2,18 @@
 
 Connects people who urgently need blood with registered voluntary donors in the same area. A university team project (React + Vite) that is being turned from a hackathon prototype into a maintained product.
 
-> **Status:** the current backend (Appwrite Cloud) is **paused**, so registration, login and requests do not work against a live database right now. The team decided to migrate to **Supabase**; see [ADR 0001](docs/adr/0001-backend-platform.md).
+> **Backend:** Supabase (Postgres + Auth with email one-time codes, Row Level Security). The old Appwrite/EmailJS hackathon backend was removed; see [ADR 0001](docs/adr/0001-backend-platform.md).
 
 ## Tech stack
-React 19 · React Router 7 · Vite 8 · Tailwind CSS 4 · Appwrite JS SDK (to be replaced by Supabase) · EmailJS · Node 24 LTS
+React 19 · React Router 7 · Vite 8 · Tailwind CSS 4 · Supabase (supabase-js) · Node 24 LTS
 
 ## Getting started
 ```bash
 nvm use                      # Node 24 (from .nvmrc)
 npm ci                       # install exactly what package-lock.json lists
 cp .env.example .env.local   # then fill in values locally (never commit .env.local)
-npm run dev                  # http://localhost:5173
+npx supabase start           # local database + auth (Docker); copy the URL and publishable key into .env.local
+npm run dev                  # http://localhost:5173 (login codes arrive in Mailpit: http://127.0.0.1:55324)
 ```
 
 ## Commands
@@ -23,7 +24,6 @@ npm run dev                  # http://localhost:5173
 | `npm test` | Unit tests with Node's built-in test runner (`src/**/*.test.js`) |
 | `npm run build` | Production build into `dist/` (must pass in CI) |
 | `npm run preview` | Serve the production build locally |
-| `npm run check-connections` | Connection checks for Appwrite/EmailJS (reads `.env.local` if present; never prints credential values) |
 
 ## Environment configuration
 Copy `.env.example` to `.env.local`.

@@ -90,15 +90,12 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       # Public frontend config for the PREVIEW environment (Settings → Environments → preview → Variables).
-      # Never point previews at production data.
+      # Previews use the STAGING Supabase project; never point previews at production data.
       - name: Build
         run: npm run build
         env:
-          VITE_APPWRITE_ENDPOINT: ${{ vars.VITE_APPWRITE_ENDPOINT }}
-          VITE_APPWRITE_PROJECT_ID: ${{ vars.VITE_APPWRITE_PROJECT_ID }}
-          VITE_APPWRITE_DATABASE_ID: ${{ vars.VITE_APPWRITE_DATABASE_ID }}
-          VITE_APPWRITE_DONORS_COLLECTION_ID: ${{ vars.VITE_APPWRITE_DONORS_COLLECTION_ID }}
-          VITE_APPWRITE_REQUESTS_COLLECTION_ID: ${{ vars.VITE_APPWRITE_REQUESTS_COLLECTION_ID }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
       - name: Make a safe preview branch name
         id: branch
@@ -159,11 +156,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_APPWRITE_ENDPOINT: ${{ vars.VITE_APPWRITE_ENDPOINT }}
-          VITE_APPWRITE_PROJECT_ID: ${{ vars.VITE_APPWRITE_PROJECT_ID }}
-          VITE_APPWRITE_DATABASE_ID: ${{ vars.VITE_APPWRITE_DATABASE_ID }}
-          VITE_APPWRITE_DONORS_COLLECTION_ID: ${{ vars.VITE_APPWRITE_DONORS_COLLECTION_ID }}
-          VITE_APPWRITE_REQUESTS_COLLECTION_ID: ${{ vars.VITE_APPWRITE_REQUESTS_COLLECTION_ID }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
       - name: Ensure the Pages project exists (first run only)
         env:

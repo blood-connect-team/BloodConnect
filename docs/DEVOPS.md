@@ -205,21 +205,20 @@ scripts/setup-github.sh --apply labels      # apply one step at a time after app
 
 | Environment | Frontend | Backend | Data | Status |
 |---|---|---|---|---|
-| **Local** | `npm run dev` | Supabase local stack (`npx supabase start`, needs Docker) or the mock mode (#47). The app still talks to the paused Appwrite until #20. | Synthetic only | UI works; data features wait for #18/#20 |
-| **Preview / staging** | Per-PR preview on Cloudflare Pages (`<branch>.blood-connect-65z.pages.dev`), `preview` environment | Supabase project **`blood-connect-staging`** (org `blood-connect-team`, Asia-Pacific, free), schema deployed by CI (§14) | Synthetic + team test accounts | Frontend live (§10); app wiring to Supabase in #18/#20 |
+| **Local** | `npm run dev` | Supabase local stack (`npx supabase start`, needs Docker); login codes arrive in Mailpit (http://127.0.0.1:55324) | Synthetic only | Full app |
+| **Preview / staging** | Per-PR preview on Cloudflare Pages (`<branch>.blood-connect-65z.pages.dev`), `preview` environment | Supabase project **`blood-connect-staging`** (org `blood-connect-team`, Asia-Pacific, free), schema deployed by CI (§14) | Synthetic + team test accounts | Frontend live (§10) on staging Supabase (needs the `VITE_SUPABASE_*` environment variables) |
 | **Production** | `blood-connect-65z.pages.dev` from `main`, `production` environment | Future Supabase project "production" | Real users | Deploys after an approver releases it (§10). Invite real users only after the beta gate (blueprint Part C). |
 
 Local development never needs production credentials.
 
 | Value | Where it belongs | Never |
 |---|---|---|
-| `VITE_*` frontend config (Appwrite endpoint/IDs today; later `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) | `.env.local`; hosting provider env vars per environment; GitHub Actions **variables** only if a workflow ever needs them | Anything secret: `VITE_*` values are public in the browser bundle |
+| `VITE_*` frontend config (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`: publishable key only) | `.env.local`; hosting provider env vars per environment; GitHub Actions **variables** only if a workflow ever needs them | Anything secret: `VITE_*` values are public in the browser bundle |
 | Supabase **service-role** key | Supabase Edge Function secrets only | Frontend, `VITE_*`, `.env.example`, GitHub YAML, chat |
 | Database password, Supabase access token (CLI deploys) | GitHub **environment secrets** (e.g. `staging`), only if deploys are automated | Logs, code |
 | Email provider API key, CAPTCHA secret | Supabase Edge Function secrets | Frontend |
 | Hosting deploy token (only if CI deploys instead of the host's Git integration) | GitHub environment secret | Code |
 | `APPWRITE_API_KEY` (scripts) | Your shell or `.env.local`, never `VITE_` prefixed | Commits |
-| EmailJS IDs (scripts) | `.env.local` (`EMAILJS_*` or `VITE_EMAILJS_*`) | Hard-coded fallbacks (removed) |
 
 `.gitignore` ignores `.env` and `.env.*` (except `.env.example`), plus `*.dump`, `*.backup` and `/backups/`. Every external account (Appwrite, EmailJS, Supabase, hosting) should have **at least two** team admins.
 

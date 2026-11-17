@@ -8,13 +8,11 @@
     "build": "vite build",
     "lint": "eslint .",
     "test": "node --test \"src/**/*.test.js\"",
-    "preview": "vite preview",
-    "check-connections": "node --env-file-if-exists=.env.local scripts/check-connections.js"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@emailjs/browser": "^4.4.1",
+    "@supabase/supabase-js": "^2.119.0",
     "@tailwindcss/vite": "^4.3.0",
-    "appwrite": "^25.0.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
