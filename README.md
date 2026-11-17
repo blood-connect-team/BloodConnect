@@ -34,7 +34,7 @@ Copy `.env.example` to `.env.local`.
 Where each secret belongs: [docs/DEVOPS.md §9](docs/DEVOPS.md#9-environments-and-secrets).
 
 ## Testing
-`npm test` runs unit tests for pure utilities. React component tests (Vitest + Testing Library) are planned in ISSUE-21. CI runs lint, tests and a production build on every pull request and every push to `main`.
+`npm test` runs unit tests for pure utilities. React component tests (Vitest + Testing Library) are planned in #21. CI runs lint, tests and a production build on every pull request and every push to `main`.
 
 ## Contributing
 Work is tracked in GitHub Issues and the "Blood Connect" GitHub Project.
@@ -51,8 +51,8 @@ Full guide: [CONTRIBUTING.md](CONTRIBUTING.md).
 - [docs/DEVOPS.md](docs/DEVOPS.md): CI, secret scanning, Dependabot, branch protection, environments, deployment, releases
 - [SECURITY.md](SECURITY.md): reporting vulnerabilities, leaked credentials, data exposure
 - [docs/adr/](docs/adr/README.md): architecture decisions (backend platform, …)
-- [BLOOD_CONNECT_PRODUCT_AUDIT.md](BLOOD_CONNECT_PRODUCT_AUDIT.md): product, code and security audit
-- [BLOOD_CONNECT_PRODUCT_BLUEPRINT.md](BLOOD_CONNECT_PRODUCT_BLUEPRINT.md): validated backlog, roadmap, workstreams, workflow
+- [docs/archive/](docs/archive/README.md): original hackathon notes (superseded)
+- **Product audit and engineering blueprint:** the team's planning documents (backlog, roadmap, workstreams). They are shared privately with the team rather than kept in this public repo, because the audit describes open security weaknesses. The backlog itself is in the GitHub issues.
 
 <details>
 <summary>Original Vite template notes</summary>

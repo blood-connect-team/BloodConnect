@@ -1,7 +1,7 @@
 # Blood Connect — DevOps Guide
 
 How code gets from a branch to `main` safely, and what is automated versus what a person must do.
-Planning background: [`BLOOD_CONNECT_PRODUCT_BLUEPRINT.md`](../BLOOD_CONNECT_PRODUCT_BLUEPRINT.md) (Part E).
+Planning background: the team's engineering blueprint, Part E (shared privately; not in this public repo).
 Day-to-day workflow for contributors: [`CONTRIBUTING.md`](../CONTRIBUTING.md). Security: [`SECURITY.md`](../SECURITY.md).
 
 ```

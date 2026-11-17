@@ -4,7 +4,7 @@ We are four part-time developers working **asynchronously**. Nobody should need 
 
 **Issue → assign → task branch → commits → pull request → CI → review → approval → squash merge → Done**
 
-Background: [blueprint Part E](BLOOD_CONNECT_PRODUCT_BLUEPRINT.md) · Automation and settings: [docs/DEVOPS.md](docs/DEVOPS.md) · Security: [SECURITY.md](SECURITY.md)
+Automation and settings: [docs/DEVOPS.md](docs/DEVOPS.md) · Security: [SECURITY.md](SECURITY.md) · Decisions: [docs/adr/](docs/adr/README.md) · Background: the team's engineering blueprint (shared privately), Part E.
 
 ---
 
