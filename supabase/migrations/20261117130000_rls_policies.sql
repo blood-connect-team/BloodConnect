@@ -24,7 +24,7 @@ as $$
     where p.id = (select auth.uid()) and p.role = 'admin'
   );
 $$;
-revoke all on function public.is_admin() from public;
+revoke all on function public.is_admin() from public, anon;
 grant execute on function public.is_admin() to authenticated;
 
 -- ---------------------------------------------------------------------------
@@ -111,16 +111,34 @@ create policy "Responses: donor, the request's owner, or admins can read"
     or (select public.is_admin())
   );
 
+-- Donors cannot read blood_requests rows (RLS), so the "is this request open for me?" check
+-- runs in a SECURITY DEFINER helper that returns only true/false.
+create or replace function public.can_respond_to_request(p_request_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from public.blood_requests r
+    join public.donors d on d.profile_id = (select auth.uid())
+    where r.id = p_request_id
+      and r.status = 'active'
+      and r.expires_at > now()
+      and r.requester_id <> d.profile_id
+  );
+$$;
+revoke all on function public.can_respond_to_request(uuid) from public, anon;
+grant execute on function public.can_respond_to_request(uuid) to authenticated;
+
 create policy "Responses: a donor responds to an open request (not their own)"
   on public.request_responses for insert to authenticated
   with check (
     donor_id = (select auth.uid())
     and status = 'accepted'
-    and exists (select 1 from public.blood_requests r
-                where r.id = request_id
-                  and r.status = 'active'
-                  and r.expires_at > now()
-                  and r.requester_id <> (select auth.uid()))
+    and (select public.can_respond_to_request(request_id))
   );
 
 create policy "Responses: donor updates own"
@@ -203,7 +221,7 @@ as $$
     and r.requester_id <> d.profile_id
   order by case r.urgency when 'critical' then 0 when 'high' then 1 else 2 end, r.created_at desc;
 $$;
-revoke all on function public.get_active_requests_for_me() from public;
+revoke all on function public.get_active_requests_for_me() from public, anon;
 grant execute on function public.get_active_requests_for_me() to authenticated;
 
 -- Contact details for one request, only between its owner and donors who accepted it.
@@ -232,7 +250,7 @@ as $$
   join public.profiles p on p.id = r.requester_id
   where r.id = p_request_id;
 $$;
-revoke all on function public.get_request_contacts(uuid) from public;
+revoke all on function public.get_request_contacts(uuid) from public, anon;
 grant execute on function public.get_request_contacts(uuid) to authenticated;
 
 -- How many available donors match one of MY requests (a count only, never identities).
@@ -252,5 +270,5 @@ as $$
     and (d.available_from is null or d.available_from <= current_date)
     and d.profile_id <> r.requester_id;
 $$;
-revoke all on function public.count_matching_donors(uuid) from public;
+revoke all on function public.count_matching_donors(uuid) from public, anon;
 grant execute on function public.count_matching_donors(uuid) to authenticated;
