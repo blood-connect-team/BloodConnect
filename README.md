@@ -2,7 +2,7 @@
 
 Connects people who urgently need blood with registered voluntary donors in the same area. A university team project (React + Vite) that is being turned from a hackathon prototype into a maintained product.
 
-> **Status:** the current backend (Appwrite Cloud) is **paused**, so registration, login and requests do not work against a live database right now. A migration to Supabase is planned. See [`BLOOD_CONNECT_PRODUCT_BLUEPRINT.md`](BLOOD_CONNECT_PRODUCT_BLUEPRINT.md).
+> **Status:** the current backend (Appwrite Cloud) is **paused**, so registration, login and requests do not work against a live database right now. The team decided to migrate to **Supabase**; see [ADR 0001](docs/adr/0001-backend-platform.md).
 
 ## Tech stack
 React 19 · React Router 7 · Vite 8 · Tailwind CSS 4 · Appwrite JS SDK (to be replaced by Supabase) · EmailJS · Node 24 LTS
@@ -50,6 +50,7 @@ Full guide: [CONTRIBUTING.md](CONTRIBUTING.md).
 - [CONTRIBUTING.md](CONTRIBUTING.md): how we claim, branch, commit, review and merge
 - [docs/DEVOPS.md](docs/DEVOPS.md): CI, secret scanning, Dependabot, branch protection, environments, deployment, releases
 - [SECURITY.md](SECURITY.md): reporting vulnerabilities, leaked credentials, data exposure
+- [docs/adr/](docs/adr/README.md): architecture decisions (backend platform, …)
 - [BLOOD_CONNECT_PRODUCT_AUDIT.md](BLOOD_CONNECT_PRODUCT_AUDIT.md): product, code and security audit
 - [BLOOD_CONNECT_PRODUCT_BLUEPRINT.md](BLOOD_CONNECT_PRODUCT_BLUEPRINT.md): validated backlog, roadmap, workstreams, workflow
 
