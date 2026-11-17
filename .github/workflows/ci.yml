@@ -96,6 +96,8 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          # Preview only: shows the dev/test account login. Never set for production.
+          VITE_ENABLE_DEV_LOGIN: ${{ vars.VITE_ENABLE_DEV_LOGIN }}
 
       - name: Make a safe preview branch name
         id: branch
