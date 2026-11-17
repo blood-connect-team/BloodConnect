@@ -1,5 +1,7 @@
 # Contributing to Blood Connect
 
+> **Using an AI coding tool** (Claude Code, Codex, Antigravity, Cursor, Copilot…)? The rules it must follow are in [AGENTS.md](AGENTS.md). Every tool reads that one file.
+
 We are four part-time developers working **asynchronously**. Nobody should need a meeting to know what to work on. Every change follows:
 
 **Issue → assign → task branch → commits → pull request → CI → review → approval → squash merge → Done**
