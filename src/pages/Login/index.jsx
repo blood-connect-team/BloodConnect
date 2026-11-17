@@ -35,7 +35,7 @@ export default function Login() {
     try {
       await sendLoginCode(email);
       setStep('code');
-      toast.success('Check your email for the code.');
+      toast.success('Check your email.');
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -72,7 +72,7 @@ export default function Login() {
           </div>
           <h1 className="text-2xl font-extrabold text-white">Log in or sign up</h1>
           <p className="mt-2 text-sm text-white/85">
-            {step === 'email' ? 'We will email you a one-time code. No password needed.' : `We sent a 6-digit code to ${email.trim()}.`}
+            {step === 'email' ? 'We will email you a login link. No password needed.' : `We sent a login email to ${email.trim()}. Open the link in it on this device, or enter the code if the email shows one.`}
           </p>
         </div>
 
@@ -93,12 +93,12 @@ export default function Login() {
         ) : (
           <form onSubmit={confirmCode} className="p-8 space-y-5" noValidate>
             <div>
-              <label htmlFor="login-code" className="block mb-2 text-sm font-bold text-gray-700">6-digit code</label>
+              <label htmlFor="login-code" className="block mb-2 text-sm font-bold text-gray-700">6-digit code (if your email has one)</label>
               <div className="relative">
                 <KeyRound size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
                 <input id="login-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} placeholder="123456" className={`${input} tracking-[0.4em] font-mono`} />
               </div>
-              <p className="mt-2 text-xs text-gray-500">You can also open the link in the email on this device.</p>
+              <p className="mt-2 text-xs text-gray-500">Only got a link? Just open it here; you will be logged in automatically.</p>
             </div>
             <button type="submit" disabled={busy} className="w-full h-12 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-bold text-sm">
               {busy ? 'Checking…' : 'Log in'}
