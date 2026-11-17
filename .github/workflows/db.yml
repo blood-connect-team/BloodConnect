@@ -72,6 +72,24 @@ jobs:
         with:
           version: 3.2.0
 
+      # Explains a malformed secret WITHOUT printing it (only yes/no facts are shown).
+      - name: Check the connection string format
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          url="$SUPABASE_DB_URL"; problems=0
+          report() { echo "::error::SUPABASE_DB_URL: $1"; problems=1; }
+          [ -n "$url" ] || report "the secret is empty or not set in environment 'staging'."
+          case "$url" in postgres://*|postgresql://*) ;; *) report "must start with postgresql:// (copy the whole 'Session pooler' line)." ;; esac
+          case "$url" in *[[:space:]]*) report "contains spaces or line breaks; copy the string again without extra characters." ;; esac
+          case "$url" in *'"'*|*"'"*) report "contains quote characters; remove them." ;; esac
+          case "$url" in *'['*|*']'*) report "still contains [ ] brackets; replace the whole [YOUR-PASSWORD] (brackets included) with the password." ;; esac
+          rest="${url#*://}"; ats="${rest//[^@]/}"
+          [ "${#ats}" -eq 1 ] || report "the part after :// must contain exactly one '@'. If the password contains @ # / : ? % or spaces, URL-encode them (e.g. @ -> %40, # -> %23) or reset the database password to letters and digits."
+          case "$rest" in *pooler.supabase.com:5432/*) ;; *) echo "::warning::Expected the Session pooler host (…pooler.supabase.com:5432). Other hosts may not be reachable from GitHub runners." ;; esac
+          [ "$problems" -eq 0 ] && echo "Connection string format looks valid (length ${#url})."
+          exit "$problems"
+
       # The dashboard shows "postgresql://…"; Supabase CLI 3 only accepts the "postgres://" scheme
       # (same meaning). Normalise it so the secret can be pasted exactly as shown.
       - name: Show pending migrations (dry run)
