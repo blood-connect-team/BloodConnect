@@ -2,7 +2,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(17);
 
 -- Tables exist
 select has_table('public', 'cities', 'cities table exists');
@@ -20,12 +20,12 @@ select is_empty(
   'RLS is enabled on every public table'
 );
 
--- Security: without policies (#17) the browser roles see no personal data
-set local role anon;
-select is_empty($$ select * from public.donors $$, 'anon cannot read donors');
-select is_empty($$ select * from public.profiles $$, 'anon cannot read profiles');
-select is_empty($$ select * from public.blood_requests $$, 'anon cannot read blood requests');
-reset role;
+-- Security: browser roles have no table privileges on personal data (grants come with #17)
+select ok(not has_table_privilege('anon', 'public.donors', 'select'), 'anon has no select privilege on donors');
+select ok(not has_table_privilege('anon', 'public.profiles', 'select'), 'anon has no select privilege on profiles');
+select ok(not has_table_privilege('anon', 'public.blood_requests', 'select'), 'anon has no select privilege on blood_requests');
+select ok(not has_table_privilege('authenticated', 'public.donors', 'select'), 'authenticated has no select privilege on donors (yet)');
+select ok(has_table_privilege('anon', 'public.cities', 'select'), 'anon may read the city list');
 
 -- Reference data: the city list is public and seeded
 set local role anon;

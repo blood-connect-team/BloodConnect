@@ -164,6 +164,13 @@ alter table public.request_responses enable row level security;
 alter table public.notifications     enable row level security;
 alter table public.reports           enable row level security;
 
+-- Table privileges: the hosted project does NOT auto-expose new tables to the Data API,
+-- so every grant is explicit. Only the public city list is granted here; #17 adds the
+-- grants for the other tables together with their policies.
+revoke all on public.cities, public.profiles, public.donors, public.blood_requests,
+  public.request_responses, public.notifications, public.reports from anon, authenticated;
+grant select on public.cities to anon, authenticated;
+
 -- The only policy in this migration: the city list is public reference data.
 create policy "Cities are readable by everyone"
   on public.cities for select
