@@ -72,12 +72,18 @@ jobs:
         with:
           version: 3.2.0
 
+      # The dashboard shows "postgresql://…"; Supabase CLI 3 only accepts the "postgres://" scheme
+      # (same meaning). Normalise it so the secret can be pasted exactly as shown.
       - name: Show pending migrations (dry run)
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: supabase db push --remote="$SUPABASE_DB_URL" --dry-run --yes
+        run: |
+          db_url="${SUPABASE_DB_URL/#postgresql:\/\//postgres://}"
+          supabase db push --remote="$db_url" --dry-run --yes
 
       - name: Apply migrations to staging
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: supabase db push --remote="$SUPABASE_DB_URL" --yes
+        run: |
+          db_url="${SUPABASE_DB_URL/#postgresql:\/\//postgres://}"
+          supabase db push --remote="$db_url" --yes
