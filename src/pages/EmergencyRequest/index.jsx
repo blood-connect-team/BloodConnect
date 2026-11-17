@@ -8,14 +8,14 @@ import { sendEmailAlert } from '../../services/emailService';
 import { normalizeBloodGroup } from '../../utils/bloodGroupNormalizer';
 
 const BLOOD_GROUPS = [
-  'O Negative (Emergency Universal)', 'O Positive', 'A Positive', 'A Negative',
+  'O Negative', 'O Positive', 'A Positive', 'A Negative',
   'B Positive', 'B Negative', 'AB Positive', 'AB Negative',
 ];
 
 const URGENCY_LEVELS = [
-  { id: 'critical', label: 'Critical', sla: '15-20 Minutes', color: '#9B1C1C', bg: '#9B1C1C', textColor: '#fff' },
-  { id: 'high',     label: 'High',     sla: '30-45 Minutes', color: '#374151', bg: '#F3F4F6', textColor: '#374151' },
-  { id: 'medium',   label: 'Medium',   sla: '1-2 Hours',     color: '#374151', bg: '#F3F4F6', textColor: '#374151' },
+  { id: 'critical', label: 'Critical', color: '#9B1C1C' },
+  { id: 'high', label: 'High', color: '#374151' },
+  { id: 'medium', label: 'Medium', color: '#374151' },
 ];
 
 const inp = (err) => ({
@@ -40,6 +40,7 @@ function validate(f) {
   if (!f.hospital.trim()) e.hospital = 'Hospital name is required.';
   if (!f.patient.trim()) e.patient = 'Patient identifier is required.';
   if (!f.blood) e.blood = 'Blood group is required.';
+  if (!f.urgency) e.urgency = 'Select an urgency level.';
   if (!f.area.trim()) e.area = 'Delivery area is required.';
   return e;
 }
@@ -47,7 +48,7 @@ function validate(f) {
 export default function EmergencyRequest() {
   const navigate = useNavigate();
   const [f, setF] = useState({
-    hospital: '', patient: '', blood: BLOOD_GROUPS[0], urgency: 'critical', area: '', notes: '',
+    hospital: '', patient: '', blood: BLOOD_GROUPS[0], urgency: '', area: '', notes: '',
   });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -144,22 +145,8 @@ export default function EmergencyRequest() {
   return (
     <div style={{ minHeight: '100vh', background: '#FFF5F5', fontFamily: "'Inter', sans-serif" }}>
 
-      {/* ── System Status Bar ── */}
-      <div style={{
-        background: '#9B1C1C', padding: '10px 28px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '13px', fontWeight: 700 }}>
-          <span style={{ fontSize: '16px' }}>✱</span>
-          SYSTEM STATUS: CRITICAL RED ALERT
-        </div>
-        <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '13px', fontWeight: 500 }}>
-          Live Inventory: O-Negative is Low (2 Units Remaining)
-        </div>
-      </div>
-
       {/* ── Main ── */}
-      <div style={{ maxWidth: '1060px', margin: '0 auto', padding: '36px 20px 60px', display: 'grid', gridTemplateColumns: '1fr 320px', gap: '28px', alignItems: 'start' }}>
+      <div className="request-layout" style={{ maxWidth: '1060px', margin: '0 auto', padding: '36px 20px 60px', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: '28px', alignItems: 'start' }}>
 
         {/* ── Form Card ── */}
         <div style={{
@@ -179,7 +166,7 @@ export default function EmergencyRequest() {
             </div>
             <div>
               <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#111827', margin: '0 0 4px' }}>New Urgent Request</h1>
-              <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>Immediate deployment of blood products for emergency surgery or trauma.</p>
+              <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>Create a blood request in Karachi. Donor availability and arrival times are not guaranteed.</p>
             </div>
           </div>
 
@@ -222,10 +209,11 @@ export default function EmergencyRequest() {
                 </div>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>Urgency Level</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <label id="er-urgency-label" style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>Urgency Level</label>
+                <div role="group" aria-labelledby="er-urgency-label" aria-describedby={errors.urgency ? 'er-urgency-error' : undefined} style={{ display: 'flex', gap: '8px' }}>
                   {URGENCY_LEVELS.map(u => (
                     <button key={u.id} type="button"
+                      aria-pressed={f.urgency === u.id}
                       onClick={() => set('urgency', u.id)}
                       style={{
                         flex: 1, padding: '10px 0', borderRadius: '8px', border: 'none',
@@ -238,6 +226,7 @@ export default function EmergencyRequest() {
                     </button>
                   ))}
                 </div>
+                <div id="er-urgency-error"><ErrMsg msg={errors.urgency} /></div>
               </div>
             </div>
 
@@ -290,7 +279,7 @@ export default function EmergencyRequest() {
               onMouseLeave={e => { e.currentTarget.style.background = submitting ? '#F87171' : '#9B1C1C'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
               {submitting ? (
-                <><div style={{ width: '18px', height: '18px', border: '2.5px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />Broadcasting…</>
+                <><div style={{ width: '18px', height: '18px', border: '2.5px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .7s linear infinite' }} />Submitting…</>
               ) : (
                 <><Zap size={18} fill="#fff" /> Submit Urgent Request</>
               )}
@@ -309,10 +298,9 @@ export default function EmergencyRequest() {
           }}>
             {/* Header */}
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', letterSpacing: '1px' }}>LIVE PREVIEW</span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', fontWeight: 700, color: '#DC2626' }}>
-                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#DC2626', display: 'inline-block', animation: 'ping 1.5s ease-in-out infinite' }} />
-                CRITICAL
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', letterSpacing: '1px' }}>REQUEST PREVIEW</span>
+              <span role="status" aria-label="Request urgency" style={{ fontSize: '11px', fontWeight: 700, color: selectedUrgency?.color || '#6B7280' }}>
+                {selectedUrgency?.label || 'Select urgency'}
               </span>
             </div>
 
@@ -320,9 +308,8 @@ export default function EmergencyRequest() {
             <div style={{ background: '#FEE2E2', padding: '20px 16px', textAlign: 'center', margin: '12px', borderRadius: '10px' }}>
               <div style={{ fontSize: '10px', fontWeight: 700, color: '#9CA3AF', letterSpacing: '1.5px', marginBottom: '4px' }}>PRODUCT TYPE</div>
               <div style={{ fontSize: '28px', fontWeight: 800, color: '#9B1C1C', letterSpacing: '-0.5px' }}>
-                {f.blood.includes('Negative') && f.blood.includes('O') ? 'O NEGATIVE' : f.blood.toUpperCase().replace(' (EMERGENCY UNIVERSAL)', '')}
+                {f.blood.toUpperCase()}
               </div>
-              <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>2 Units Required</div>
             </div>
 
             {/* Details */}
@@ -330,7 +317,7 @@ export default function EmergencyRequest() {
               {[
                 { icon: <Building2 size={14} color="#9CA3AF" />, label: 'Facility', value: f.hospital || '—' },
                 { icon: <User size={14} color="#9CA3AF" />, label: 'Patient', value: f.patient || '—' },
-                { icon: <Clock size={14} color="#9CA3AF" />, label: 'SLA Target', value: selectedUrgency?.sla, red: true },
+                { icon: <Clock size={14} color="#9CA3AF" />, label: 'Urgency', value: selectedUrgency?.label || 'Not selected' },
               ].map(({ icon, label, value, red }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #F9FAFB', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6B7280', fontSize: '13px', flexShrink: 0 }}>
@@ -344,7 +331,7 @@ export default function EmergencyRequest() {
               <div style={{ background: '#FEF2F2', borderRadius: '8px', padding: '12px 14px', marginTop: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                 <Info size={15} color="#DC2626" style={{ flexShrink: 0, marginTop: '1px' }} />
                 <p style={{ fontSize: '12px', color: '#DC2626', lineHeight: 1.6, margin: 0 }}>
-                  Finalizing this request will notify the nearest dispatch center and lock inventory.
+                  This request searches for potential donors by exact blood group and area. A match does not establish medical suitability; the treating team must confirm compatibility and donation eligibility.
                 </p>
               </div>
             </div>
@@ -382,7 +369,7 @@ export default function EmergencyRequest() {
             <div style={{ padding: '16px' }}>
               <div style={{ fontWeight: 700, fontSize: '15px', color: '#111827', marginBottom: '6px' }}>Every Second Counts</div>
               <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.6 }}>
-                Our intelligent routing system connects your request to the closest blood bank with available units within milliseconds.
+                BloodConnect supports requests in Karachi only. Contact the hospital directly for urgent care; donor responses and arrival times cannot be guaranteed.
               </div>
             </div>
           </div>
@@ -406,16 +393,16 @@ export default function EmergencyRequest() {
             <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: '#9B1C1C', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px', boxShadow: '0 8px 24px rgba(155,28,28,0.4)' }}>
               <CheckCircle size={36} color="#fff" />
             </div>
-            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#111827', margin: '0 0 8px', textAlign: 'center' }}>Request Broadcast!</h2>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#111827', margin: '0 0 8px', textAlign: 'center' }}>Request Created</h2>
             <p style={{ color: '#6B7280', fontSize: '14px', lineHeight: 1.6, marginBottom: '20px', textAlign: 'center' }}>
-              Emergency request for <strong style={{ color: '#DC2626' }}>{f.blood}</strong> has been broadcast to matching donors.
+              Your request for <strong style={{ color: '#DC2626' }}>{f.blood}</strong> has been saved. Donor responses and email delivery are not guaranteed.
             </p>
 
             {/* Matching Donors List */}
             {matchingDonors && matchingDonors.length > 0 ? (
               <div style={{ marginBottom: '24px' }}>
                 <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#374151', marginBottom: '12px', letterSpacing: '0.5px' }}>
-                  ALERTS SENT TO {matchingDonors.length} DONOR(S)
+                  {matchingDonors.length} POTENTIAL DONOR(S) FOUND
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {matchingDonors.map((donor, idx) => (
@@ -451,7 +438,7 @@ export default function EmergencyRequest() {
               }}>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: '#DC2626', marginBottom: '4px' }}>⚠️ No Matching Donors</div>
                 <div style={{ fontSize: '12px', color: '#6B7280' }}>
-                  No donors available in this area matching blood type {f.blood}.
+                  The search returned no potential donors in this area with blood type {f.blood}.
                 </div>
               </div>
             )}
@@ -474,6 +461,10 @@ export default function EmergencyRequest() {
         @keyframes slideUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
         @keyframes fadeIn { from{opacity:0} to{opacity:1} }
         @keyframes ping { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(2)} }
+        @media (max-width: 700px) {
+          .request-layout { grid-template-columns: minmax(0, 1fr) !important; }
+          .request-layout form > div { grid-template-columns: minmax(0, 1fr) !important; }
+        }
       `}</style>
     </div>
   );
