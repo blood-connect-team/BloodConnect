@@ -1,0 +1,44 @@
+# Database checks for Supabase migrations (#16).
+# Runs only when supabase/ changes: starts a real local Postgres with the Supabase CLI,
+# applies every migration plus seed.sql, lints the schema and runs the pgTAP tests in
+# supabase/tests. Status check name: "db". It is not a required check, because it is
+# path-filtered; database PRs also need a code-owner review.
+name: Database
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["supabase/**", ".github/workflows/db.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  db:
+    name: db
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.2.0
+
+      - name: Start local database (applies migrations and seed)
+        run: supabase db start
+
+      - name: Lint database schema
+        run: supabase db lint --level warning --fail-on error
+
+      - name: Run database tests (pgTAP)
+        run: supabase test db
