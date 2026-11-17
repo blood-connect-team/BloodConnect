@@ -15,8 +15,7 @@ import {
 import { donorService } from '../../services/donorService';
 import { normalizeBloodGroup } from '../../utils/bloodGroupNormalizer';
 import { Logo } from '../../components/common/Logo';
-
-const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+import { BLOOD_GROUPS } from '../../constants/bloodGroups';
 
 function validate(f) {
   const e = {};
