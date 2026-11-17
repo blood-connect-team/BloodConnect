@@ -95,7 +95,7 @@ Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`. Use `fix(securi
 |---|---|---|
 | `ci` | every push to the PR | `npm ci` → lint → tests → build. **Must pass.** |
 | `gitleaks` | every push to the PR | Scans the PR's commits for secrets (values redacted). **Must pass.** |
-| `deploy-preview` | as soon as `ci` passes | Your **dev link** `https://<branch>.blood-connect-65z.pages.dev`, shown as **View deployment** on the PR. Check your own work there; no reviewer is needed for this. |
+| `deploy-preview` | as soon as `ci` passes | Your **dev link** `https://<branch>.blood-connect-65z.pages.dev`, shown as **View deployment** on the PR. Check your own work there with the **dev / test account** (login page; code shared privately). Avoid email login on previews: the free email service sends only a few emails per hour for the whole team. |
 | auto-merge + `deploy-production` | when the reviewer **approves** (and all checks are green) | PR is squash-merged, `main` is built again, and the app goes live at `https://blood-connect-65z.pages.dev`. |
 
 ## 6. Reviews

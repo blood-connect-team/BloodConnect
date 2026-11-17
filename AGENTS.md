@@ -93,6 +93,7 @@ Before adding a helper, **search** the repo for one that does the same thing. If
 - Pure logic in `src/utils` or `src/services` gets a `*.test.js` next to it (Node's built-in `node:test`, see `utils/phone.test.js`).
 - Run `npm run check` before proposing a commit. CI runs the same plus gitleaks and database checks; a red CI is never "someone else's problem".
 - **See it running:** every PR gets a preview at `https://<branch>.blood-connect-65z.pages.dev` (staging database). Log in with the shared **dev / test account** (box on the login page, previews only; the code is shared privately by the team leads, never committed). Locally, use `npx supabase start` + Mailpit.
+- **Do not test with email login on previews.** Staging uses Supabase's free built-in email, which sends only a few emails per hour for the whole project. Use the dev / test account on previews; test email login locally (Mailpit has no limit). Never write scripts or tests that send login emails to staging.
 - Do not claim something works unless you ran it. Say what you did not verify.
 
 ## 8. Git and pull requests
