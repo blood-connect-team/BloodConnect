@@ -20,6 +20,7 @@ npm run dev                  # http://localhost:5173 (login codes arrive in Mail
 | Command | What it does |
 |---|---|
 | `npm run dev` | Start the development server |
+| `npm run check` | Lint + tests + build in one go (run before every commit) |
 | `npm run lint` | ESLint (must pass in CI) |
 | `npm test` | Unit tests with Node's built-in test runner (`src/**/*.test.js`) |
 | `npm run build` | Production build into `dist/` (must pass in CI) |

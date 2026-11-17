@@ -15,10 +15,15 @@ Closes #<!-- issue number; one issue per PR (or list each issue of an agreed bun
 ## Implementation summary
 <!-- Key decisions, files touched, anything a reviewer should look at first. -->
 
+## AI usage
+<!-- Which tool(s) helped (Claude Code, Codex, Antigravity, Cursor, Copilot…), or "none". -->
+- Tool(s): 
+- [ ] The tool followed [AGENTS.md](../AGENTS.md); I read and understand every changed line
+- [ ] No real personal data or secrets were pasted into the AI tool
+
 ## Tests performed
-- [ ] `npm run lint` passes
-- [ ] `npm test` passes (new or updated tests listed below)
-- [ ] `npm run build` passes
+- [ ] `npm run check` passes (lint + tests + build)
+- [ ] New or updated tests listed below
 - [ ] Every acceptance criterion of the linked issue checked:
   - [ ] <!-- criterion -->
 - [ ] UI changes checked at desktop width **and** 375 px mobile width
