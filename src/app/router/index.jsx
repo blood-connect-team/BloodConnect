@@ -4,45 +4,49 @@ import { createBrowserRouter } from 'react-router-dom';
 import { MainLayout } from '../layouts/MainLayout';
 import { DashboardLayout } from '../layouts/DashboardLayout';
 import { ProtectedRoute } from './ProtectedRoute';
+import { Loader } from '../../components/common/Loader';
 
-// Pages
-import Landing from '../../pages/Landing';
-import Register from '../../pages/Register';
-import Login from '../../pages/Login';
-import Dashboard from '../../pages/Dashboard';
-import EmergencyRequest from '../../pages/EmergencyRequest';
-import Notifications from '../../pages/Notifications';
-import Admin from '../../pages/Admin';
-import Confirmation from '../../pages/Confirmation';
+// Pages are loaded on demand: each one becomes its own chunk (#41).
+const page = (load) => ({ lazy: async () => ({ Component: (await load()).default }) });
+const Landing = page(() => import('../../pages/Landing'));
+const Register = page(() => import('../../pages/Register'));
+const Login = page(() => import('../../pages/Login'));
+const Dashboard = page(() => import('../../pages/Dashboard'));
+const EmergencyRequest = page(() => import('../../pages/EmergencyRequest'));
+const Notifications = page(() => import('../../pages/Notifications'));
+const Admin = page(() => import('../../pages/Admin'));
+const Confirmation = page(() => import('../../pages/Confirmation'));
 
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <MainLayout />,
+    HydrateFallback: Loader,
     children: [
-      { index: true, element: <Landing /> },
-      { path: 'login', element: <Login /> },
-      { path: 'confirmation', element: <Confirmation /> },
-      { path: 'notifications', element: <Notifications /> },
+      { index: true, ...Landing },
+      { path: 'login', ...Login },
+      { path: 'confirmation', ...Confirmation },
+      { path: 'notifications', ...Notifications },
       {
         // Logged in, profile not required yet: this is where the profile is completed.
         element: <ProtectedRoute requireProfile={false} />,
-        children: [{ path: 'register', element: <Register /> }],
+        children: [{ path: 'register', ...Register }],
       },
       {
         // Creating a request needs an account and a profile (#25).
         element: <ProtectedRoute />,
-        children: [{ path: 'request', element: <EmergencyRequest /> }],
+        children: [{ path: 'request', ...EmergencyRequest }],
       },
     ],
   },
   {
     path: '/dashboard',
+    HydrateFallback: Loader,
     element: <ProtectedRoute />,
     children: [
       {
         element: <DashboardLayout />,
-        children: [{ index: true, element: <Dashboard /> }],
+        children: [{ index: true, ...Dashboard }],
       },
     ],
   },
@@ -52,7 +56,7 @@ export const router = createBrowserRouter([
     children: [
       {
         element: <MainLayout />,
-        children: [{ index: true, element: <Admin /> }],
+        children: [{ index: true, ...Admin }],
       },
     ],
   },
