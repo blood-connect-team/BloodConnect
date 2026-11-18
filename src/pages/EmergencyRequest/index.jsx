@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { AlertCircle, Building2, CheckCircle2, Droplet, FileText, MapPin, Phone, Siren, User } from 'lucide-react';
+import { AlertCircle, Building2, CheckCircle2, Clock, Droplet, FileText, MapPin, Phone, Siren, User } from 'lucide-react';
 import { useAuth } from '../../app/providers/auth-context';
 import { normalizePhone } from '../../utils/phone';
+import { resolveNeededBy } from '../../utils/neededBy';
 import { BLOOD_GROUPS, URGENCY_LEVELS, countMatchingDonors, createRequest, listCities } from '../../services/requests';
 
 const newKey = () => crypto.randomUUID();
@@ -18,6 +19,8 @@ function validate(f) {
   if (!f.cityId) e.cityId = 'City is required.';
   const units = Number(f.units);
   if (!Number.isInteger(units) || units < 1 || units > 10) e.units = 'Units must be between 1 and 10.';
+  const deadline = resolveNeededBy(f.neededBy);
+  if (deadline.error) e.neededBy = deadline.error;
   const phone = normalizePhone(f.contactPhone);
   if ('error' in phone) e.contactPhone = phone.error;
   if (f.notes.length > 500) e.notes = 'Notes must be 500 characters or less.';
@@ -47,6 +50,7 @@ export default function EmergencyRequest() {
     urgency: 'high',
     cityId: donor?.city_id ? String(donor.city_id) : '',
     units: '1',
+    neededBy: '',
     contactPhone: profile?.phone ?? '',
     notes: '',
   });
@@ -76,7 +80,8 @@ export default function EmergencyRequest() {
     setSubmitting(true);
     try {
       const contactPhone = normalizePhone(f.contactPhone).e164;
-      const created = await createRequest(user.id, { ...f, contactPhone }, idempotencyKey);
+      const { neededBy, expiresAt } = resolveNeededBy(f.neededBy);
+      const created = await createRequest(user.id, { ...f, contactPhone, neededBy, expiresAt }, idempotencyKey);
       let matches = null;
       try {
         matches = await countMatchingDonors(created.id);
@@ -109,7 +114,7 @@ export default function EmergencyRequest() {
             {result.matches === null
               ? 'Matching donors can now see it.'
               : result.matches === 0
-                ? `No available ${result.bloodGroup} donors are registered in ${result.city} yet. Your request stays open for 48 hours; share it with family and friends too.`
+                ? `No available ${result.bloodGroup} donors are registered in ${result.city} yet. Your request stays open until it expires; share it with family and friends too.`
                 : `${result.matches} available ${result.bloodGroup} donor${result.matches > 1 ? 's' : ''} in ${result.city} can see your request.`}
           </p>
           <p className="text-sm text-gray-500">When a donor accepts, their name and phone appear on your dashboard. We never show you a list of donors.</p>
@@ -175,6 +180,12 @@ export default function EmergencyRequest() {
             <Field id="req-units" label="Units needed" icon={Droplet} error={errors.units}>
               <input id="req-units" type="number" min={1} max={10} value={f.units} onChange={(e) => set('units', e.target.value)} className={box(errors.units)} {...aria('units')} />
             </Field>
+            <Field id="req-neededBy" label="Needed by (optional)" icon={Clock} error={errors.neededBy} hint="Leave empty if there is no fixed time. The request closes at this time if it is sooner than 48 hours.">
+              <input id="req-neededBy" type="datetime-local" value={f.neededBy} onChange={(e) => set('neededBy', e.target.value)} className={box(errors.neededBy)} {...aria('neededBy')} />
+            </Field>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field id="req-contactPhone" label="Contact phone" icon={Phone} error={errors.contactPhone} hint="Shown only to donors who accept.">
               <input id="req-contactPhone" type="tel" value={f.contactPhone} onChange={(e) => set('contactPhone', e.target.value)} placeholder="0300 1234567" className={box(errors.contactPhone)} {...aria('contactPhone')} />
             </Field>
