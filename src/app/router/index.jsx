@@ -14,11 +14,14 @@ import EmergencyRequest from '../../pages/EmergencyRequest';
 import Notifications from '../../pages/Notifications';
 import Admin from '../../pages/Admin';
 import Confirmation from '../../pages/Confirmation';
+import NotFound from '../../pages/NotFound';
+import ErrorPage from '../../pages/ErrorPage';
 
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <MainLayout />,
+    errorElement: <ErrorPage />,
     children: [
       { index: true, element: <Landing /> },
       { path: 'login', element: <Login /> },
@@ -34,21 +37,25 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute />,
         children: [{ path: 'request', element: <EmergencyRequest /> }],
       },
+      { path: '*', element: <NotFound /> },
     ],
   },
   {
     path: '/dashboard',
     element: <ProtectedRoute />,
+    errorElement: <ErrorPage />,
     children: [
       {
         element: <DashboardLayout />,
-        children: [{ index: true, element: <Dashboard /> }],
+        // Unknown /dashboard/... paths show the 404 only after the auth guard has passed.
+        children: [{ index: true, element: <Dashboard /> }, { path: '*', element: <NotFound /> }],
       },
     ],
   },
   {
     path: '/admin',
     element: <ProtectedRoute />, // admin role check: #19
+    errorElement: <ErrorPage />,
     children: [
       {
         element: <MainLayout />,
