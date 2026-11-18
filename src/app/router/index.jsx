@@ -11,9 +11,6 @@ import Register from '../../pages/Register';
 import Login from '../../pages/Login';
 import Dashboard from '../../pages/Dashboard';
 import EmergencyRequest from '../../pages/EmergencyRequest';
-import Notifications from '../../pages/Notifications';
-import Admin from '../../pages/Admin';
-import Confirmation from '../../pages/Confirmation';
 
 export const router = createBrowserRouter([
   {
@@ -22,8 +19,6 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Landing /> },
       { path: 'login', element: <Login /> },
-      { path: 'confirmation', element: <Confirmation /> },
-      { path: 'notifications', element: <Notifications /> },
       {
         // Logged in, profile not required yet: this is where the profile is completed.
         element: <ProtectedRoute requireProfile={false} />,
@@ -43,16 +38,6 @@ export const router = createBrowserRouter([
       {
         element: <DashboardLayout />,
         children: [{ index: true, element: <Dashboard /> }],
-      },
-    ],
-  },
-  {
-    path: '/admin',
-    element: <ProtectedRoute />, // admin role check: #19
-    children: [
-      {
-        element: <MainLayout />,
-        children: [{ index: true, element: <Admin /> }],
       },
     ],
   },
