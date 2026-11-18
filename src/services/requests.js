@@ -21,7 +21,7 @@ export async function getMyRequests(userId) {
   return unwrap(
     await supabase
       .from('blood_requests')
-      .select('id, blood_group, units_needed, hospital_name, urgency, status, expires_at, created_at, cities(name)')
+      .select('id, blood_group, units_needed, hospital_name, urgency, status, needed_by, expires_at, created_at, cities(name)')
       .eq('requester_id', userId)
       .order('created_at', { ascending: false }),
     'Could not load your requests.',
@@ -40,6 +40,9 @@ export async function createRequest(userId, form, idempotencyKey) {
         urgency: form.urgency,
         city_id: Number(form.cityId),
         units_needed: Number(form.units),
+        needed_by: form.neededBy ?? null,
+        // Only set when the deadline is earlier than the 48 hour default (see utils/neededBy.js).
+        ...(form.expiresAt ? { expires_at: form.expiresAt } : {}),
         contact_phone: form.contactPhone,
         notes: form.notes?.trim() || null,
         idempotency_key: idempotencyKey,

@@ -39,7 +39,7 @@ function Empty({ children }) {
 }
 
 /** Contact list returned by get_request_contacts: the database decides who sees what. */
-function Contacts({ requestId, intro }) {
+function Contacts({ requestId, intro, units }) {
   const [contacts, setContacts] = useState(null);
   const [error, setError] = useState(null);
 
@@ -54,6 +54,11 @@ function Contacts({ requestId, intro }) {
   return (
     <div className="mt-3 space-y-2">
       <p className="text-xs text-gray-500">{intro}</p>
+      {units != null && (
+        <p className="text-xs text-gray-500">
+          {contacts.length} donor{contacts.length > 1 ? 's' : ''} accepted for {units} requested unit{units > 1 ? 's' : ''}. Acceptances are a contact target; they do not mean blood has been donated.
+        </p>
+      )}
       {contacts.map((c, i) => {
         const wa = whatsAppLink(c.phone, 'Hi, this is about the Blood Connect request.');
         return (
@@ -213,7 +218,7 @@ export default function Dashboard() {
                           <span className="text-xs text-gray-500">{req.units_needed} unit{req.units_needed > 1 ? 's' : ''}</span>
                         </div>
                         <p className="flex items-center gap-1 text-sm text-gray-700"><Building2 size={14} aria-hidden="true" /> {req.hospital_name}</p>
-                        <p className="flex items-center gap-1 text-xs text-gray-500"><MapPin size={12} aria-hidden="true" /> {req.city} · <Clock size={12} aria-hidden="true" /> expires {formatDate(req.expires_at)}</p>
+                        <p className="flex items-center gap-1 text-xs text-gray-500"><MapPin size={12} aria-hidden="true" /> {req.city} · <Clock size={12} aria-hidden="true" /> {req.needed_by ? `needed by ${formatDate(req.needed_by)}` : `expires ${formatDate(req.expires_at)}`}</p>
                       </div>
                       {accepted ? (
                         <button type="button" disabled={busyId === req.id} onClick={() => respond(req, 'withdrawn')} className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-bold text-gray-700">
@@ -250,7 +255,8 @@ export default function Dashboard() {
                       <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold capitalize text-gray-700">{req.status}</span>
                     </div>
                     <p className="text-sm text-gray-700">{req.hospital_name} · {req.cities?.name}</p>
-                    <p className="text-xs text-gray-500">Created {formatDate(req.created_at)}</p>
+                    <p className="text-xs text-gray-500">{req.units_needed} unit{req.units_needed > 1 ? 's' : ''} · Created {formatDate(req.created_at)}</p>
+                    <p className="text-xs text-gray-500">{req.needed_by ? `Needed by ${formatDate(req.needed_by)} · ` : ''}Expires {formatDate(req.expires_at)}</p>
                   </div>
                   {req.status === 'active' && (
                     <button type="button" disabled={busyId === req.id} onClick={() => cancel(req)} className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-bold text-gray-700">
@@ -258,7 +264,7 @@ export default function Dashboard() {
                     </button>
                   )}
                 </div>
-                {req.status === 'active' && <Contacts requestId={req.id} intro="Donors who accepted:" />}
+                {req.status === 'active' && <Contacts requestId={req.id} intro="Donors who accepted:" units={req.units_needed} />}
               </li>
             ))}
           </ul>
